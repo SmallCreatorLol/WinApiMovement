@@ -1,0 +1,14 @@
+[project]
+name = "winapimovement"
+version = "1.0.0"
+description = "Minimalistic, high-performance Windows automation library using pure WinAPI and ctypes."
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+authors = [
+    { name = "Rostik" }
+]
+requires-python = ">=3.8"
+keywords = ["winapi", "automation", "mouse", "keyboard", "rawinput", "screenshot", "ctypes"]
+
+[project.urls]
+Homepage = "https://github.com/yourname/winapimovement"
