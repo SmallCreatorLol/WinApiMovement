@@ -204,6 +204,7 @@ WM_KEYDOWN=0x0100
 RIDEV_INPUTSINK=0x00000100
 RID_INPUT=0x10000003
 WM_INPUT=0x00FF
+KEYEVENTF_SCANCODE = 0x0008
 special_keys = {
     "ctrl": 0x11,
     "control": 0x11,
@@ -321,53 +322,56 @@ def keyToVK(key:str)->int:
 
 
 
-def keyUp(key, unicode=False):
-    if not unicode:
+def keyDown(key, type='vk'):
+    event = INPUT()
+    event.type = 1
+    if type == 'vk':
         vk = keyToVK(key)
-        event = INPUT()
-        event.type = 1
-        event.ki = KEYBDINPUT(vk, 0, KEYEVENTF_KEYUP, 0, None)
-        ctypes.windll.user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(INPUT))
-    elif unicode:
-        code = ord(key)
-        event = INPUT()
-        event.type = 1
-        event.ki = KEYBDINPUT(0, code, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP, 0, None)
-        ctypes.windll.user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(INPUT))
-    else:
-        raise TypeError("unicode must be a boolean")
-
-
-def keyDown(key, unicode=False):
-    if unicode == False:
-        vk = keyToVK(key)
-        event = INPUT()
-        event.type = 1
         event.ki = KEYBDINPUT(vk, 0, 0, 0, None)
-        ctypes.windll.user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(INPUT))
-    elif unicode == True:
+    elif type == 'unicode':
         code = ord(key)
-        event = INPUT()
-        event.type = 1
         event.ki = KEYBDINPUT(0, code, KEYEVENTF_UNICODE, 0, None)
-        ctypes.windll.user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(INPUT))
+    elif type == 'scan':
+        vk = keyToVK(key)
+        scan = ctypes.windll.user32.MapVirtualKeyW(vk, 0)
+        event.ki = KEYBDINPUT(0, scan, KEYEVENTF_SCANCODE, 0, None)
     else:
-        raise TypeError("unicode must be a boolean")
+        raise TypeError("type must be 'vk', 'unicode' or 'scan'")
+    ctypes.windll.user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(INPUT))
 
 
 
-def press(key, presses=1, interval=0, unicode=False):
+def keyUp(key, type='vk'):
+    event = INPUT()
+    event.type = 1
+    if type == 'vk':
+        vk = keyToVK(key)
+        event.ki = KEYBDINPUT(vk, 0, KEYEVENTF_KEYUP, 0, None)
+    elif type == 'unicode':
+        code = ord(key)
+        event.ki = KEYBDINPUT(0, code, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP, 0, None)
+    elif type == 'scan':
+        vk = keyToVK(key)
+        scan = ctypes.windll.user32.MapVirtualKeyW(vk, 0)
+        event.ki = KEYBDINPUT(0, scan, KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, 0, None)
+    else:
+        raise TypeError("type must be 'vk', 'unicode' or 'scan'")
+    ctypes.windll.user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(INPUT))
+
+
+
+def press(key, presses=1, interval=0, type='vk'):
     for _ in range(presses):
-        keyDown(key, unicode=unicode)
+        keyDown(key, type=type)
         time.sleep(interval)
-        keyUp(key, unicode=unicode)
+        keyUp(key, type=type)
         time.sleep(interval)
 
 
 
-def write(text, interval=0, unicode=False):
+def write(text, interval=0, type='unicode'):
     for char in text:
-        press(char, interval=interval, unicode=unicode)
+        press(char, interval=interval, type=type)
 
 
 
@@ -673,41 +677,53 @@ def load_image_raw(path):
     g.DeleteObject(hbitmap)
     gdiplus.GdipDisposeImage(image_ptr)
     gdiplus.GdiplusShutdown(token)
+    print("Loaded:", w0, h0, "bytes:", len(buffer))
     return w0,h0,bytes(buffer)
 
 
 
-def locateOnScreen(path,region=None):
-    r=_screenshot_raw(region)
+def hash_rows(buf, w, h):
+    row_bytes = w * 4
+    hashes = []
+    for y in range(h):
+        start = y * row_bytes
+        row = buf[start:start+row_bytes]
+        hashes.append(zlib.crc32(row))
+    return hashes
+
+
+
+def locateOnScreen(path, region=None, step=3):
+    r = _screenshot_raw(region)
     if r is None:
         return None
-    sw,sh,screen=r
-    nw,nh,needle=load_image_raw(path)
-    hay_mv=memoryview(screen)
-    ned_mv=memoryview(needle)
-    row_bytes=nw*4
-    sw4=sw*4
-    max_y=sh-nh+1
-    max_x=sw-nw+1
-    p0=ned_mv[0:4]
-    p1=ned_mv[4:8] if nw>1 else None
-    for y in range(max_y):
-        base_y=y*sw4
-        for x in range(max_x):
-            si0=base_y+x*4
-            if hay_mv[si0:si0+4]!=p0:
+    sw, sh, screen = r
+    nw, nh, needle = load_image_raw(path)
+    if nw * nh > 200 * 200:
+        return None
+    hay_mv = memoryview(screen)
+    sw4 = sw * 4
+    row_bytes = nw * 4
+    needle_hashes = hash_rows(needle, nw, nh)
+    first_hash = needle_hashes[0]
+    max_y = sh - nh + 1
+    max_x = sw - nw + 1
+    for y in range(0, max_y, step):
+        base_y = y * sw4
+        for x in range(0, max_x, step):
+            si = base_y + x * 4
+            row = hay_mv[si:si+row_bytes]
+            if zlib.crc32(row) != first_hash:
                 continue
-            if p1 is not None and hay_mv[si0+4:si0+8]!=p1:
-                continue
-            ok=True
-            for j in range(nh):
-                si=(y+j)*sw4+x*4
-                ni=j*row_bytes
-                if hay_mv[si:si+row_bytes]!=ned_mv[ni:ni+row_bytes]:
-                    ok=False
+            ok = True
+            for j in range(1, nh):
+                si2 = (y + j) * sw4 + x * 4
+                row2 = hay_mv[si2:si2+row_bytes]
+                if zlib.crc32(row2) != needle_hashes[j]:
+                    ok = False
                     break
             if ok:
-                return x,y,nw,nh
+                return x, y, nw, nh
     return None
 
 
@@ -718,71 +734,74 @@ def center(box):
 
 
 
-def locateCenterOnScreen(path,region=None):
-    r=locateOnScreen(path,region)
-    return None if r is None else center(r)
+def locateCenterOnScreen(path, region=None, step=3):
+    r = locateOnScreen(path, region, step)
+    return None if r is None else (r[0] + r[2]//2, r[1] + r[3]//2)
 
 
 
-def locateAllOnScreen(path,region=None):
-    r=_screenshot_raw(region)
+def locateAllOnScreen(path, region=None, step=3):
+    r = _screenshot_raw(region)
     if r is None:
         return []
-    sw,sh,screen=r
-    nw,nh,needle=load_image_raw(path)
-    hay_mv=memoryview(screen)
-    ned_mv=memoryview(needle)
-    row_bytes=nw*4
-    sw4=sw*4
-    max_y=sh-nh+1
-    max_x=sw-nw+1
-    p0=ned_mv[0:4]
-    p1=ned_mv[4:8] if nw>1 else None
-    res=[]
-    for y in range(max_y):
-        base_y=y*sw4
-        for x in range(max_x):
-            si0=base_y+x*4
-            if hay_mv[si0:si0+4]!=p0:
+    sw, sh, screen = r
+    nw, nh, needle = load_image_raw(path)
+    if nw * nh > 200 * 200:
+        return []
+    hay_mv = memoryview(screen)
+    sw4 = sw * 4
+    row_bytes = nw * 4
+    needle_hashes = hash_rows(needle, nw, nh)
+    first_hash = needle_hashes[0]
+    max_y = sh - nh + 1
+    max_x = sw - nw + 1
+    results = []
+    for y in range(0, max_y, step):
+        base_y = y * sw4
+        for x in range(0, max_x, step):
+            si = base_y + x * 4
+            row = hay_mv[si:si+row_bytes]
+            if zlib.crc32(row) != first_hash:
                 continue
-            if p1 is not None and hay_mv[si0+4:si0+8]!=p1:
-                continue
-            ok=True
-            for j in range(nh):
-                si=(y+j)*sw4+x*4
-                ni=j*row_bytes
-                if hay_mv[si:si+row_bytes]!=ned_mv[ni:ni+row_bytes]:
-                    ok=False
+            ok = True
+            for j in range(1, nh):
+                si2 = (y + j) * sw4 + x * 4
+                row2 = hay_mv[si2:si2+row_bytes]
+                if zlib.crc32(row2) != needle_hashes[j]:
+                    ok = False
                     break
             if ok:
-                res.append((x,y,nw,nh))
-    return res
+                results.append((x, y, nw, nh))
+    return results
 
 
 
-def locate(needle,haystack,nw,nh,sw,sh):
-    hay_mv=memoryview(haystack)
-    ned_mv=memoryview(needle)
-    row_bytes=nw*4
-    sw4=sw*4
-    max_y=sh-nh+1
-    max_x=sw-nw+1
-    first_row=ned_mv[:row_bytes]
-    for y in range(max_y):
-        base_y=y*sw4
-        for x in range(max_x):
-            si0=base_y+x*4
-            if hay_mv[si0:si0+row_bytes]!=first_row:
+def locate(needle, haystack, nw, nh, sw, sh, step=3):
+    hay_mv = memoryview(haystack)
+    ned_mv = memoryview(needle)
+    sw4 = sw * 4
+    row_bytes = nw * 4
+    # Хэши needle
+    needle_hashes = hash_rows(needle, nw, nh)
+    first_hash = needle_hashes[0]
+    max_y = sh - nh + 1
+    max_x = sw - nw + 1
+    for y in range(0, max_y, step):
+        base_y = y * sw4
+        for x in range(0, max_x, step):
+            si = base_y + x * 4
+            row = hay_mv[si:si+row_bytes]
+            if zlib.crc32(row) != first_hash:
                 continue
-            ok=True
-            for j in range(1,nh):
-                si=(y+j)*sw4+x*4
-                ni=j*row_bytes
-                if hay_mv[si:si+row_bytes]!=ned_mv[ni:ni+row_bytes]:
-                    ok=False
+            ok = True
+            for j in range(1, nh):
+                si2 = (y + j) * sw4 + x * 4
+                row2 = hay_mv[si2:si2+row_bytes]
+                if zlib.crc32(row2) != needle_hashes[j]:
+                    ok = False
                     break
             if ok:
-                return x,y,nw,nh
+                return x, y, nw, nh
     return None
 
 
