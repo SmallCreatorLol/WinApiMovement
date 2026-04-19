@@ -561,7 +561,7 @@ def pixelMatchesColor(x,y,expected_color,tolerance=0):
 
 
 
-def _get_screen_raw(region=None):
+def _getScreenRAW(region=None):
     if region:
         x, y, w, h = region
     else:
@@ -588,7 +588,7 @@ def _png_chunk(t,d):
 
 
 
-def _encode_png_bgra(w,h,data):
+def _encodePngBGRA(w,h,data):
     fixed=bytearray(len(data))
     for i in range(0,len(data),4):
         b=data[i]
@@ -615,15 +615,15 @@ def _encode_png_bgra(w,h,data):
 
 
 def screenshot(region=None):
-    r=_get_screen_raw(region)
+    r=_getScreenRAW(region)
     if r is None:
         return None
     w,h,buf=r
-    return _encode_png_bgra(w,h,buf)
+    return _encodePngBGRA(w,h,buf)
 
 
 
-def screenshot_to_file(path,region=None):
+def screenshotToFile(path,region=None):
     data=screenshot(region)
     if data is None:
         return False
@@ -633,7 +633,7 @@ def screenshot_to_file(path,region=None):
 
 
 
-def load_image_raw(path):
+def loadImageRAW(path):
     with open(path, 'rb') as f:
         data = f.read()
         w, h = struct.unpack('<ii', data[18:26])
@@ -644,7 +644,7 @@ def load_image_raw(path):
 
 
 
-def hash_rows(buf, w, h):
+def hashRows(buf, w, h):
     row_bytes = w * 4
     hashes = []
     for y in range(h):
@@ -725,17 +725,17 @@ def locateCenterOnScreen(path, confidence=0.9, region=[0,0,1920,1080], minSearch
 
 
 def locateAllOnScreen(path, region=None, step=3):
-    r = _get_screen_raw(region)
+    r = _getScreenRAW(region)
     if r is None:
         return []
     sw, sh, screen = r
-    nw, nh, needle = load_image_raw(path)
+    nw, nh, needle = loadImageRAW(path)
     if nw * nh > 200 * 200:
         return []
     hay_mv = memoryview(screen)
     sw4 = sw * 4
     row_bytes = nw * 4
-    needle_hashes = hash_rows(needle, nw, nh)
+    needle_hashes = hashRows(needle, nw, nh)
     first_hash = needle_hashes[0]
     max_y = sh - nh + 1
     max_x = sw - nw + 1
@@ -765,7 +765,7 @@ def locate(needle, haystack, nw, nh, sw, sh, step=3):
     ned_mv = memoryview(needle)
     sw4 = sw * 4
     row_bytes = nw * 4
-    needle_hashes = hash_rows(needle, nw, nh)
+    needle_hashes = hashRows(needle, nw, nh)
     first_hash = needle_hashes[0]
     max_y = sh - nh + 1
     max_x = sw - nw + 1
@@ -861,7 +861,7 @@ def _guid(s):
 
 
 
-def get_audio_output_devices():
+def getAudioOutputDevices():
     count = ctypes.windll.winmm.waveOutGetNumDevs()
     devices = []
     caps = WAVEOUTCAPSW()
@@ -873,7 +873,7 @@ def get_audio_output_devices():
 
 
 
-def get_audio_input_devices():
+def getAudioInputDevices():
     count = ctypes.windll.winmm.waveInGetNumDevs()
     devices = []
     caps = WAVEINCAPSW()
@@ -884,12 +884,12 @@ def get_audio_input_devices():
 
 
 
-def play_sound(path):
+def playSound(path):
     ctypes.windll.winmm.PlaySoundW(path, None, 0x00020000 | 0x0002)
 
 
 
-def get_system_volume():
+def getVolume():
     CLSID_MMDeviceEnumerator = "{BCDE0395-E52F-467C-8E3D-C4579291692E}"
     IID_IMMDeviceEnumerator = "{A95664D2-9614-4F35-A746-DE8DB63617E6}"
     IID_IAudioEndpointVolume = "{5CDF2C82-841E-4546-9722-0CF74078229A}"
@@ -922,7 +922,7 @@ def get_system_volume():
 
 
 
-def set_system_volume(level_percent):
+def setVolume(level_percent):
     if level_percent > 100: level_percent = 100
     if level_percent < 0: level_percent = 0
     level_float = level_percent / 100.0
@@ -949,7 +949,7 @@ def set_system_volume(level_percent):
 
 
 
-def get_mic_hz(duration=0.1):
+def getMicHZ(duration=0.1):
     wfx = WAVEFORMATEX(1, 1, 44100, 88200, 2, 16, 0)
     hIn = ctypes.c_void_p()
     if winmm.waveInOpen(ctypes.byref(hIn), -1, ctypes.byref(wfx), 0, 0, 0) != 0:
@@ -976,7 +976,7 @@ def get_mic_hz(duration=0.1):
 
 
 
-def get_mic_volume(duration=0.1):
+def getMicVolume(duration=0.1):
     wfx = WAVEFORMATEX(1, 1, 44100, 88200, 2, 16, 0)
     hIn = ctypes.c_void_p()
     if winmm.waveInOpen(ctypes.byref(hIn), -1, ctypes.byref(wfx), 0, 0, 0) != 0:
