@@ -53,6 +53,13 @@ Pixel color reading                                |          r,g,b = pixel(100,
 Pixel color comparison with tolerance              |          pixelMatchesColor(100,200,(255,0,0),10)                                         
 Raw pixel comparison                               |          pixelMatchesColor_raw(x,y,(r,g,b),10,raw,sw)                                    
                                                    |                                                                                          
+SOUND                                              |                                                                                          
+                                                   |                                                                                          
+get all audio devices output/input                 |          getAudioOutputDevices(); getAudioInputDevices                                   
+plays sound                                        |          playSound(sound.wav)                                                            
+get/change system volume                           |          getVolume(); setVolume(50)                                                      
+get mic volume/hz                                  |          getMicHZ(); getMicVolume()                                                      
+                                                   |                                                                                          
 AUTHOR: Rostik.                                    |                                                                                          
 version: 1.0                                       |                                                                                          
 Creating time: 4 days                              |                                                                                          
