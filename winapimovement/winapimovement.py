@@ -973,6 +973,9 @@ def get_mic_hz(duration=0.1):
     winmm.waveInUnprepareHeader(hIn, ctypes.byref(hdr), ctypes.sizeof(WAVEHDR))
     winmm.waveInClose(hIn)
     return hz
+
+
+
 def get_mic_volume(duration=0.1):
     wfx = WAVEFORMATEX(1, 1, 44100, 88200, 2, 16, 0)
     hIn = ctypes.c_void_p()
