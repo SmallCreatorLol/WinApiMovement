@@ -1,7 +1,7 @@
 [2026-04-20 01:03] Version 1.0.3
   ADDED:
     - Docstrings added to all functions (mouse, keyboard, screen, audio).
-    - Added getMicVolume() function.
+    - Added sound functions.
     - Inserted one blank line for readability (total: 1645 lines).
 
   CHANGED:
