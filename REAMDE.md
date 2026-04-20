@@ -24,6 +24,7 @@ Mouse button down/up                               |          mouseDown('left');
 High‑speed clicking (batched SendInput)            |          click(times=1000)                                                               
 Vertical and horizontal scrolling                  |          scroll(vertical=5); scroll(horizontal=3)                                        
 Drag and drop                                      |          dragTo(100, 100); dragRel(50, 0)                                                
+humanity drag; move                                |          humanityMoveTo(); humanityMoveRel(); humanityDragTo(); humanityDragRel();
                                                    |                                                                                          
 Keyboard                                           |                                                                                          
                                                    |                                                                                          
@@ -63,7 +64,7 @@ get mic volume/hz                                  |          getMicHZ(); getMic
 AUTHOR: Rostik.                                    |                                                                                          
 version: 1.0.3                                     |
 created v1: 8 april 2026                           |
-Creating time: 15 days                             |                                                                                          
+Creating time: 16 days                             |                                                                                          
 Created: 20 April 2026                             |                                                                                          
                                                    |                                                                                          
                                                    |                                                                                          
