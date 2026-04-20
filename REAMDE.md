@@ -61,7 +61,8 @@ get/change system volume                           |          getVolume(); setVo
 get mic volume/hz                                  |          getMicHZ(); getMicVolume()                                                      
                                                    |                                                                                          
 AUTHOR: Rostik.                                    |                                                                                          
-version: 1.0.2                                     |                                                                                          
+version: 1.0.3                                     |
+created v1: 8 april 2026                           |
 Creating time: 15 days                             |                                                                                          
 Created: 20 April 2026                             |                                                                                          
                                                    |                                                                                          
