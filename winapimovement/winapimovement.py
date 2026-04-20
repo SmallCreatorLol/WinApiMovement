@@ -7,6 +7,9 @@ import time
 import threading
 import struct
 import zlib
+import random
+import math
+
 
 # FOR WORK START
 libc = ctypes.cdll.msvcrt
@@ -320,6 +323,166 @@ def dragRel(dx, dy, steps=100, duration=1, button='left'):
     target_x = start_x + dx
     target_y = start_y + dy
     dragTo(target_x, target_y, steps, duration, button)
+    # CODE END
+
+
+
+def humanityMoveTo(x, y, duration=0.4, roughness=1.0):
+    """
+    Moves the cursor to an absolute position using a human‑like motion model
+    with angle shifts, inertia, micro‑pauses, speed variation and final stabilization.
+
+    Args:
+        x (int): Target X coordinate.
+        y (int): Target Y coordinate.
+        duration (float): Total movement time in seconds.
+        roughness (float): Strength of angle changes, micro‑jerks and micro‑pauses.
+
+    Returns:
+        None
+    """
+    
+    # CODE START
+    x1, y1 = position()
+    dist = math.hypot(x - x1, y - y1)
+    steps = int(dist / 4) + 25
+    cx, cy = x1, y1
+    if random.random() < 0.25:
+        time.sleep(random.uniform(0.02, 0.05))
+    start = time.perf_counter()
+    angle_offset = 0.0
+    angle_inertia = 0
+    base_step = dist / steps
+    speed_multiplier = 1.0
+    for i in range(steps):
+        if steps - i <= 6:
+            for _ in range(6):
+                dx = x - cx
+                dy = y - cy
+                dist_left = math.hypot(dx, dy)
+                if dist_left < 0.5:
+                    cx, cy = x, y
+                    moveTo(int(cx), int(cy))
+                    return
+                dx /= dist_left
+                dy /= dist_left
+                step = min(2.0, dist_left) * 0.40
+                cx += dx * step + random.uniform(-0.12, 0.12)
+                cy += dy * step + random.uniform(-0.12, 0.12)
+                moveTo(int(cx), int(cy))
+                time.sleep(0.004)
+            moveTo(x, y)
+            return
+        t = i / (steps - 1)
+        dx = x - cx
+        dy = y - cy
+        base_angle = math.atan2(dy, dx)
+        if angle_inertia > 0:
+            angle_inertia -= 1
+        else:
+            angle_offset += random.uniform(-0.05, 0.05) * roughness
+            angle_offset = max(min(angle_offset, 0.12), -0.12)
+        if random.random() < 0.05 * roughness:
+            angle_offset += random.uniform(-0.08, 0.08) * roughness
+            angle_inertia = random.randint(3, 7)
+            speed_multiplier *= random.uniform(1.07, 1.15)
+        if random.random() < 0.04:
+            time.sleep(random.uniform(0.015, 0.04))
+            angle_offset += random.uniform(-0.07, 0.07) * roughness
+            angle_inertia = random.randint(2, 5)
+            speed_multiplier *= random.uniform(0.85, 0.93)
+        speed_multiplier += (1.0 - speed_multiplier) * 0.1
+        final_angle = base_angle + angle_offset
+        step = base_step * speed_multiplier
+        cx += math.cos(final_angle) * step
+        cy += math.sin(final_angle) * step
+        if random.random() < 0.02 * roughness:
+            cx += random.uniform(-1.2, 1.2)
+            cy += random.uniform(-1.2, 1.2)
+        if t > 0.85:
+            cx += random.uniform(-0.2, 0.2)
+            cy += random.uniform(-0.2, 0.2)
+        moveTo(int(cx), int(cy))
+        elapsed = time.perf_counter() - start
+        remaining = duration - elapsed
+        left = steps - i - 1
+        if left > 0 and remaining > 0:
+            time.sleep(remaining / left)
+    # CODE END
+
+
+
+def humanityMoveRel(dx, dy, duration=0.4, roughness=1.0):
+    """
+    Moves the cursor to a relative position using the same human‑like motion model
+    as humanityMoveTo, including angle shifts, inertia and final stabilization.
+
+    Args:
+        dx (int): Horizontal offset from the current cursor position.
+        dy (int): Vertical offset from the current cursor position.
+        duration (float): Total movement time in seconds.
+        roughness (float): Strength of human‑like irregularities.
+
+    Returns:
+        None
+    """
+    
+    # CODE START
+    start_x, start_y = position()
+    target_x = start_x + dx
+    target_y = start_y + dy
+    humanityMoveTo(target_x, target_y, duration=duration, roughness=roughness)
+    # CODE END
+
+
+
+def humanityDragTo(x, y, duration=0.4, roughness=1.0, button='left'):
+    """
+    Holds a mouse button and drags the cursor to an absolute position
+    using the humanityMoveTo motion model with angle shifts, inertia,
+    micro‑pauses and final stabilization.
+
+    Args:
+        x (int): Target X coordinate.
+        y (int): Target Y coordinate.
+        duration (float): Total drag time in seconds.
+        roughness (float): Strength of human‑like irregularities.
+        button (str): Mouse button to hold during the drag.
+
+    Returns:
+        None
+    """
+    
+    # CODE START
+    mouseDown(button=button)
+    humanityMoveTo(x=x,y=y,duration=duration,roughness=roughness)
+    mouseUp(button=button)
+    # CODE END
+
+
+
+def humanityDragRel(dx, dy, duration=0.4, roughness=1.0, button='left'):
+    """
+    Holds a mouse button and drags the cursor to a relative position
+    using the humanityMoveTo motion model with angle shifts, inertia,
+    micro‑pauses and final stabilization.
+
+    Args:
+        dx (int): Horizontal offset from the current cursor position.
+        dy (int): Vertical offset from the current cursor position.
+        duration (float): Total drag time in seconds.
+        roughness (float): Strength of human‑like irregularities.
+        button (str): Mouse button to hold during the drag.
+
+    Returns:
+        None
+    """
+    
+    # CODE START
+    start_x, start_y = position()
+    target_x = start_x + dx
+    target_y = start_y + dy
+    humanityDragTo(target_x, target_y, duration=duration, roughness=roughness, button=button)
     # CODE END
 
 # FUNCTIONS END
