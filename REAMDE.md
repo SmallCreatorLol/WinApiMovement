@@ -62,8 +62,8 @@ get mic volume/hz                                  |          getMicHZ(); getMic
                                                    |                                                                                          
 AUTHOR: Rostik.                                    |                                                                                          
 version: 1.0.2                                     |                                                                                          
-Creating time: 13 days                             |                                                                                          
-Created: 11 April 2026                             |                                                                                          
+Creating time: 15 days                             |                                                                                          
+Created: 20 April 2026                             |                                                                                          
                                                    |                                                                                          
                                                    |                                                                                          
 Why WinApiMovement?
