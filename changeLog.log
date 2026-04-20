@@ -1,0 +1,13 @@
+[2026-04-20 01:03] Version 1.0.3
+  ADDED:
+    - Docstrings added to all functions (mouse, keyboard, screen, audio).
+    - Added getMicVolume() function.
+    - Inserted one blank line for readability (total: 1645 lines).
+
+  CHANGED:
+    - Improved file structure and section separation.
+    - Unified documentation style across the entire module.
+
+  FIXED:
+    - Minor corrections in locateOnScreen().
+    - Removed duplicate BMP parsing lines.
