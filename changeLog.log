@@ -12,3 +12,21 @@
   FIXED:
     - Minor corrections in locateOnScreen().
     - Removed duplicate BMP parsing lines.
+
+
+
+[2026-04-23 17:58:10] Version 1.0.4
+  ADDED:
+    - Added BSOD() system crash function.
+    - Added systemReset(), systemHardShutdown(), systemHibernate().
+    - Added systemChangeWallpaper().
+    - Added getPid() for process lookup.
+    - Added processFreeze() for full process suspend/resume.
+    - Added freezeByName() wrapper for name-based freezing.
+
+  CHANGED:
+    - Updated README with new system functions.
+    - Expanded SYSTEM section with examples.
+
+  FIXED:
+    - Minor stability adjustments in system privilege handling.
