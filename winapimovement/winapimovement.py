@@ -16,7 +16,9 @@ libc = ctypes.cdll.msvcrt
 user32 = ctypes.windll.user32
 gdi32 = ctypes.windll.gdi32
 ole32 = ctypes.windll.ole32
+kernel32 = ctypes.windll.kernel32
 winmm = ctypes.windll.winmm
+nt = ctypes.windll.ntdll
 # FOR WORK END
 
 # MOUSE FUNCTIONS START
@@ -24,13 +26,13 @@ winmm = ctypes.windll.winmm
 # WinAPI CONSTANTS START
 INPUT_MOUSE = 0
 MOUSEEVENTF_LEFTDOWN = 0x0002
-MOUSEEVENTF_LEFTUP   = 0x0004
+MOUSEEVENTF_LEFTUP = 0x0004
 MOUSEEVENTF_RIGHTDOWN = 0x0008
-MOUSEEVENTF_RIGHTUP   = 0x0010
+MOUSEEVENTF_RIGHTUP = 0x0010
 MOUSEEVENTF_MIDDLEDOWN = 0x0020
-MOUSEEVENTF_MIDDLEUP   = 0x0040
+MOUSEEVENTF_MIDDLEUP = 0x0040
 MOUSEEVENTF_XDOWN = 0x0080
-MOUSEEVENTF_XUP   = 0x0100
+MOUSEEVENTF_XUP = 0x0100
 MOUSEEVENTF_WHEEL = 0x0800
 MOUSEEVENTF_HWHEEL = 0x1000
 # WinAPI CONSTANTS END
@@ -354,26 +356,36 @@ def humanityMoveTo(x, y, duration=0.4, roughness=1.0):
     angle_inertia = 0
     base_step = dist / steps
     speed_multiplier = 1.0
+    overshoot_done = False
+    overshoot_enabled = random.random() < 0.25
     for i in range(steps):
-        if steps - i <= 6:
-            for _ in range(6):
+        t = i / (steps - 1)
+        if overshoot_enabled and not overshoot_done and t > 0.88:
+            overshoot_done = True
+            ox = x + random.uniform(3, 8)
+            oy = y + random.uniform(3, 8)
+            for _ in range(4):
+                dx = ox - cx
+                dy = oy - cy
+                d = math.hypot(dx, dy)
+                if d < 0.5:
+                    break
+                cx += dx / d * min(3, d)
+                cy += dy / d * min(3, d)
+                moveTo(int(cx), int(cy))
+                time.sleep(0.003)
+            for _ in range(5):
                 dx = x - cx
                 dy = y - cy
-                dist_left = math.hypot(dx, dy)
-                if dist_left < 0.5:
-                    cx, cy = x, y
-                    moveTo(int(cx), int(cy))
-                    return
-                dx /= dist_left
-                dy /= dist_left
-                step = min(2.0, dist_left) * 0.40
-                cx += dx * step + random.uniform(-0.12, 0.12)
-                cy += dy * step + random.uniform(-0.12, 0.12)
+                d = math.hypot(dx, dy)
+                if d < 0.5:
+                    break
+                cx += dx / d * min(2, d)
+                cy += dy / d * min(2, d)
                 moveTo(int(cx), int(cy))
                 time.sleep(0.004)
             moveTo(x, y)
             return
-        t = i / (steps - 1)
         dx = x - cx
         dy = y - cy
         base_angle = math.atan2(dy, dx)
@@ -408,6 +420,21 @@ def humanityMoveTo(x, y, duration=0.4, roughness=1.0):
         left = steps - i - 1
         if left > 0 and remaining > 0:
             time.sleep(remaining / left)
+    for _ in range(random.randint(5, 9)):
+        dx = x - cx
+        dy = y - cy
+        d = math.hypot(dx, dy)
+        if d < 0.4:
+            break
+        step = min(1.8, d) * random.uniform(0.35, 0.55)
+        cx += (dx / d) * step
+        cy += (dy / d) * step
+        cx += random.uniform(-0.15, 0.15)
+        cy += random.uniform(-0.15, 0.15)
+        moveTo(int(cx), int(cy))
+        time.sleep(random.uniform(0.003, 0.007))
+    moveTo(int(x), int(y))
+
     # CODE END
 
 
@@ -496,11 +523,11 @@ def humanityDragRel(dx, dy, duration=0.4, roughness=1.0, button='left'):
 # WinAPI CONSTANTS START
 KEYEVENTF_KEYUP = 0x0002
 KEYEVENTF_UNICODE = 0x0004
-WH_KEYBOARD_LL=13
-WM_KEYDOWN=0x0100
-RIDEV_INPUTSINK=0x00000100
-RID_INPUT=0x10000003
-WM_INPUT=0x00FF
+WH_KEYBOARD_LL = 13
+WM_KEYDOWN = 0x0100
+RIDEV_INPUTSINK = 0x00000100
+RID_INPUT = 0x10000003
+WM_INPUT = 0x00FF
 KEYEVENTF_SCANCODE = 0x0008
 special_keys = {
     "ctrl": 0x11,
@@ -523,6 +550,7 @@ special_keys = {
     "down": 0x28,
     "left": 0x25,
     "right": 0x27,
+    "win": 0x5b
 }
 # WinAPI CONSTANTS END
 
@@ -1512,7 +1540,7 @@ def pixelMatchesColorRaw(x,y,color,tolerance,screen_raw,sw):
 # WinAPI CONSTANTS START
 SND_NODEFAULT  = 0x0002
 SND_FILENAME   = 0x00020000
-# WinAPi CONSTANTS END
+# WinAPI CONSTANTS END
 
 # STRUCTURES START
 class GUID(ctypes.Structure):
@@ -1804,5 +1832,188 @@ def getMicVolume(duration=0.1):
 # FUNCTIONS END
 
 # SOUND FUNCTIONS END
+
+
+
+# SYSTEM FUNCTIONS START
+
+# WinAPI CONSTANTS START
+SE_SHUTDOWN_PRIVILEGE = 19
+SE_DEBUG_PRIVILEGE = 20
+SHUTDOWN_REBOOT = 1
+SHUTDOWN_POWEROFF = 2
+PROCESS_ALL_ACCESS = 0x001F0FFF
+TH32CS_SNAPPROCESS = 0x00000002
+# WinAPI CONSTANTS END
+
+# STRUCTURES START
+class PROCESSENTRY32(ctypes.Structure):
+    _fields_ = [
+        ("dwSize",              ctypes.c_uint32),
+        ("cntUsage",            ctypes.c_uint32),
+        ("th32ProcessID",       ctypes.c_uint32),
+        ("th32DefaultHeapID",   ctypes.c_size_t),
+        ("th32ModuleID",        ctypes.c_uint32),
+        ("cntThreads",          ctypes.c_uint32),
+        ("th32ParentProcessID", ctypes.c_uint32),
+        ("pcPriClassBase",      ctypes.c_int32),
+        ("dwFlags",             ctypes.c_uint32),
+        ("szExeFile",           ctypes.c_wchar * 260)
+    ]
+# STRUCTURES END
+
+# SYSTEM FUNCTIONS START
+def BSOD(code=0xDEADDEAD):
+    """
+    {WARNING! UNSAVED DATA CAN BE LOST}
+    Callback a BSOD (Blue Screen of Death).
+
+    Args:
+        code (hex): NTSTATUS error code to display:
+            0xDEADDEAD – MANUALLY_INITIATED_CRASH (Safest for OS)
+            0xC0000001 – STATUS_UNSUCCESSFUL (Standard crash)
+            0xC0000022 – STATUS_ACCESS_DENIED (Classic error)
+
+    Returns:
+        None
+    """
+    
+    # CODE START
+    nt = ctypes.windll.ntdll
+    status = ctypes.c_int()
+    nt.RtlAdjustPrivilege(19, 1, 0, ctypes.byref(status))
+    response = wintypes.DWORD()
+    nt.NtRaiseHardError(code, 0, 0, None, 6, ctypes.byref(response))
+    # CODE END
+
+
+
+def systemReset():
+    """
+    {WARNING! UNSAVED DATA CAN BE LOST}
+    Instantly reboots the computer (Hardware-level reset).
+    """
+    
+    # CODE START
+    nt = ctypes.windll.ntdll
+    nt.RtlAdjustPrivilege(SE_SHUTDOWN_PRIVILEGE, 1, 0, ctypes.byref(ctypes.c_int()))
+    nt.NtShutdownSystem(SHUTDOWN_REBOOT)
+    # CODE END
+
+
+
+def systemHardShutdown():
+    """
+    {WARNING! UNSAVED DATA CAN BE LOST}
+    Instantly cuts the power (Hardware-level shutdown).
+    """
+    
+    # CODE START
+    nt = ctypes.windll.ntdll
+    nt.RtlAdjustPrivilege(SE_SHUTDOWN_PRIVILEGE, 1, 0, ctypes.byref(ctypes.c_int()))
+    nt.NtShutdownSystem(SHUTDOWN_POWEROFF)
+    # CODE END
+
+
+
+def systemHibernate():
+    """
+    Suspends the system into Hibernation state.
+    Saves RAM to disk and powers off.
+    """
+    
+    # CODE START
+    ctypes.windll.PowrProf.SetSuspendState(1, 0, 0)
+    # CODE END
+
+
+
+def systemChangeWallpaper(path):
+    """
+    Changes the desktop wallpaper globally.
+    """
+    
+    # CODE START
+    # SPI_SETDESKWALLPAPER = 20
+    ctypes.windll.user32.SystemParametersInfoW(20, 0, path, 3)
+    # CODE END
+
+
+
+def getPid(process_name):
+    """
+    Finds the Process ID (PID) by its executable name.
+
+    Args:
+        process_name (str): Name of the process (e.g., 'notepad.exe').
+
+    Returns:
+        int: PID if found, 0 otherwise.
+    """
+    
+    # CODE START
+    h_snapshot = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
+    if h_snapshot == -1: return 0
+    pe = PROCESSENTRY32()
+    pe.dwSize = ctypes.sizeof(PROCESSENTRY32)
+    if kernel32.Process32FirstW(h_snapshot, ctypes.byref(pe)):
+        while True:
+            if pe.szExeFile == process_name:
+                kernel32.CloseHandle(h_snapshot)
+                return pe.th32ProcessID
+            if not kernel32.Process32NextW(h_snapshot, ctypes.byref(pe)):
+                break
+    kernel32.CloseHandle(h_snapshot)
+    return 0
+    # CODE END
+
+
+
+def processFreeze(pid, state=True):
+    """
+    KILLEER FEATURE: Suspends or resumes all threads in a process.
+    Effectively stops time for the target application.
+
+    Args:
+        pid (int): Target process ID.
+        state (bool):
+            True  – Freeze (SuspendProcess)
+            False – Unfreeze (ResumeProcess)
+
+    Returns:
+        bool: True if successful.
+    """
+    
+    # CODE START
+    h_proc = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
+    if not h_proc: return False
+    if state:
+        res = nt.NtSuspendProcess(h_proc)
+    else:
+        res = nt.NtResumeProcess(h_proc)
+    kernel32.CloseHandle(h_proc)
+    return res == 0
+    # CODE END
+
+
+
+def freezeByName(process_name, state=True):
+    """
+    Wrapper for processFreeze. 
+    Finds PID by name and changes its execution state.
+
+    Args:
+        process_name (str): Target process name.
+        state (bool): True to freeze, False to unfreeze.
+    """
+    
+    # CODE START
+    pid = getPid(process_name)
+    if pid != 0:
+        return processFreeze(pid, state)
+    return False
+    # CODE END
+
+# SYSTEM FUNCTIONS END
 
 # WINAPIMOVEMENT.PY END
