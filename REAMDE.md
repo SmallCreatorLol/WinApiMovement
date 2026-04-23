@@ -24,7 +24,7 @@ Mouse button down/up                               |          mouseDown('left');
 High‑speed clicking (batched SendInput)            |          click(times=1000)                                                               
 Vertical and horizontal scrolling                  |          scroll(vertical=5); scroll(horizontal=3)                                        
 Drag and drop                                      |          dragTo(100, 100); dragRel(50, 0)                                                
-humanity drag; move                                |          humanityMoveTo(); humanityMoveRel(); humanityDragTo(); humanityDragRel();
+humanity drag; move                                |          humanityMoveTo(); humanityMoveRel(); humanityDragTo(); humanityDragRel();       
                                                    |                                                                                          
 Keyboard                                           |                                                                                          
                                                    |                                                                                          
@@ -61,11 +61,23 @@ plays sound                                        |          playSound(sound.wa
 get/change system volume                           |          getVolume(); setVolume(50)                                                      
 get mic volume/hz                                  |          getMicHZ(); getMicVolume()                                                      
                                                    |                                                                                          
+System                                             |                                                                                          
+                                                   |                                                                                          
+Blue Screen of Death                               |          BSOD()                                                                          
+Instant reboot (hardware-level)                    |          systemReset()                                                                   
+Instant power off (hardware-level)                 |          systemHardShutdown()                                                            
+Hibernate system                                   |          systemHibernate()                                                               
+Change wallpaper                                   |          systemChangeWallpaper('wall.jpg')                                               
+Find process PID                                   |          pid = getPid('notepad.exe')                                                     
+Freeze/unfreeze process                            |          processFreeze(pid, True); processFreeze(pid, False)                             
+Freeze/unfreeze process by name                    |          freezeByName('notepad.exe', True)                                               
+                                                   |                                                                                          
+                                                   |                                                                                          
 AUTHOR: Rostik.                                    |                                                                                          
-version: 1.0.3                                     |
-created v1: 8 april 2026                           |
-Creating time: 16 days                             |                                                                                          
-Created: 20 April 2026                             |                                                                                          
+version: 1.0.4                                     |                                                                                          
+created v1: 8 april 2026                           |                                                                                          
+Creating time: 19 days                             |                                                                                          
+Created: 23 April 2026                             |                                                                                          
                                                    |                                                                                          
                                                    |                                                                                          
 Why WinApiMovement?
