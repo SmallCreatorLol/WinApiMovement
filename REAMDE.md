@@ -67,17 +67,28 @@ Blue Screen of Death                               |          BSOD()
 Instant reboot (hardware-level)                    |          systemReset()                                                                   
 Instant power off (hardware-level)                 |          systemHardShutdown()                                                            
 Hibernate system                                   |          systemHibernate()                                                               
+Sleep system                                       |          systemSleep()                                                                   
 Change wallpaper                                   |          systemChangeWallpaper('wall.jpg')                                               
-Find process PID                                   |          pid = getPid('notepad.exe')                                                     
-Freeze/unfreeze process                            |          processFreeze(pid, True); processFreeze(pid, False)                             
-Freeze/unfreeze process by name                    |          freezeByName('notepad.exe', True)                                               
+Lock workstation                                   |          systemLock()                                                                    
+Get OS version info                                |          info = systemInfo()                                                             
+                                                   |                                                                                          
+Process                                            |                                                                                          
+                                                   |                                                                                          
+Get PIDs by name                                   |          getPids('notepad.exe')                                                          
+Freeze/unfreeze process                            |          processFreeze(pid, True)                                                        
+Freeze/unfreeze by name                            |          freezeByName('chrome.exe', False)                                               
+Get threads of process                             |          getThreads(pid)                                                                 
+Freeze/unfreeze thread                             |          freezeThread(tid, True)                                                         
+Get process name                                   |          getProcessName(pid)                                                             
+Get process path                                   |          getProcessPath(pid)                                                             
+Get process modules (DLL list)                     |          getProcessModules(pid)                                                          
                                                    |                                                                                          
                                                    |                                                                                          
 AUTHOR: Rostik.                                    |                                                                                          
-version: 1.0.4                                     |                                                                                          
+version: 1.0.5                                     |                                                                                          
 created v1: 8 april 2026                           |                                                                                          
-Creating time: 19 days                             |                                                                                          
-Created: 23 April 2026                             |                                                                                          
+Creating time: 23 days                             |                                                                                          
+Created: 26 April 2026                             |                                                                                          
                                                    |                                                                                          
                                                    |                                                                                          
 Why WinApiMovement?
