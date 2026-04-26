@@ -30,3 +30,22 @@
 
   FIXED:
     - Minor stability adjustments in system privilege handling.
+
+
+
+[2026-04-26 22:45:00] Version 1.0.5
+  ADDED:
+    - Added systemSleep() for S3 sleep state.
+    - Added systemLock() for workstation locking.
+    - Added systemInfo() using RtlGetVersion.
+    - Added getThreads() for thread enumeration.
+    - Added freezeThread() for single-thread suspend/resume.
+    - Added getProcessName(), getProcessPath(), getProcessModules().
+
+  CHANGED:
+    - Moved all process-related functions from SYSTEM to PROCESS section.
+    - Updated README PROCESS section with aligned formatting.
+
+  FIXED:
+    - Corrected thread snapshot iteration stability.
+    - Minor cleanup in PROCESS structures and constants.
