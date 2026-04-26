@@ -19,6 +19,7 @@ ole32 = ctypes.windll.ole32
 kernel32 = ctypes.windll.kernel32
 winmm = ctypes.windll.winmm
 nt = ctypes.windll.ntdll
+PowrProf = ctypes.windll.PowrProf
 # FOR WORK END
 
 # MOUSE FUNCTIONS START
@@ -815,15 +816,17 @@ def addHotkey(key, callback):
     
     # CODE START
     global started
-    if len(key) != 1:
-        raise TypeError("addHotkey only accepts one key, for combinations use addCombo")
-    vk = ord(key.upper())
+    key = key.lower()
+    if key in special_keys:
+        vk = special_keys[key]
+    elif len(key) == 1:
+        vk = ord(key.upper())
+    else:
+        raise TypeError(f"Unknown key: {key}")
     callbacks.append((vk, callback))
-    if started:
-        return
-    started = True
-    threading.Thread(target=_raw_loop, daemon=True).start()
-    # CODE END
+    if not started:
+        started = True
+        threading.Thread(target=_raw_loop, daemon=True).start()
 
 
 
@@ -1842,27 +1845,26 @@ SE_SHUTDOWN_PRIVILEGE = 19
 SE_DEBUG_PRIVILEGE = 20
 SHUTDOWN_REBOOT = 1
 SHUTDOWN_POWEROFF = 2
-PROCESS_ALL_ACCESS = 0x001F0FFF
-TH32CS_SNAPPROCESS = 0x00000002
 # WinAPI CONSTANTS END
 
 # STRUCTURES START
-class PROCESSENTRY32(ctypes.Structure):
+class OSVERSIONINFOEXW(ctypes.Structure):
     _fields_ = [
-        ("dwSize",              ctypes.c_uint32),
-        ("cntUsage",            ctypes.c_uint32),
-        ("th32ProcessID",       ctypes.c_uint32),
-        ("th32DefaultHeapID",   ctypes.c_size_t),
-        ("th32ModuleID",        ctypes.c_uint32),
-        ("cntThreads",          ctypes.c_uint32),
-        ("th32ParentProcessID", ctypes.c_uint32),
-        ("pcPriClassBase",      ctypes.c_int32),
-        ("dwFlags",             ctypes.c_uint32),
-        ("szExeFile",           ctypes.c_wchar * 260)
+        ("dwOSVersionInfoSize", ctypes.c_ulong),
+        ("dwMajorVersion", ctypes.c_ulong),
+        ("dwMinorVersion", ctypes.c_ulong),
+        ("dwBuildNumber", ctypes.c_ulong),
+        ("dwPlatformId", ctypes.c_ulong),
+        ("szCSDVersion", ctypes.c_wchar * 128),
+        ("wServicePackMajor", ctypes.c_ushort),
+        ("wServicePackMinor", ctypes.c_ushort),
+        ("wSuiteMask", ctypes.c_ushort),
+        ("wProductType", ctypes.c_byte),
+        ("wReserved", ctypes.c_byte),
     ]
 # STRUCTURES END
 
-# SYSTEM FUNCTIONS START
+# FUNCTIONS START
 def BSOD(code=0xDEADDEAD):
     """
     {WARNING! UNSAVED DATA CAN BE LOST}
@@ -1879,7 +1881,6 @@ def BSOD(code=0xDEADDEAD):
     """
     
     # CODE START
-    nt = ctypes.windll.ntdll
     status = ctypes.c_int()
     nt.RtlAdjustPrivilege(19, 1, 0, ctypes.byref(status))
     response = wintypes.DWORD()
@@ -1895,7 +1896,6 @@ def systemReset():
     """
     
     # CODE START
-    nt = ctypes.windll.ntdll
     nt.RtlAdjustPrivilege(SE_SHUTDOWN_PRIVILEGE, 1, 0, ctypes.byref(ctypes.c_int()))
     nt.NtShutdownSystem(SHUTDOWN_REBOOT)
     # CODE END
@@ -1909,7 +1909,6 @@ def systemHardShutdown():
     """
     
     # CODE START
-    nt = ctypes.windll.ntdll
     nt.RtlAdjustPrivilege(SE_SHUTDOWN_PRIVILEGE, 1, 0, ctypes.byref(ctypes.c_int()))
     nt.NtShutdownSystem(SHUTDOWN_POWEROFF)
     # CODE END
@@ -1923,8 +1922,24 @@ def systemHibernate():
     """
     
     # CODE START
-    ctypes.windll.PowrProf.SetSuspendState(1, 0, 0)
+    PowrProf.SetSuspendState(1, 0, 0)
     # CODE END
+
+
+
+def systemSleep():
+    """
+    Puts the system into Sleep mode (S3 state).
+    RAM stays powered, system enters low-power state.
+
+    Returns:
+        None
+    """
+    
+    # CODE START
+    PowrProf.SetSuspendState(0, 0, 0)
+    # CODE END
+
 
 
 
@@ -1934,38 +1949,156 @@ def systemChangeWallpaper(path):
     """
     
     # CODE START
-    # SPI_SETDESKWALLPAPER = 20
-    ctypes.windll.user32.SystemParametersInfoW(20, 0, path, 3)
+    user32.SystemParametersInfoW(20, 0, path, 3)
     # CODE END
 
 
 
-def getPid(process_name):
+def systemLock():
     """
-    Finds the Process ID (PID) by its executable name.
-
-    Args:
-        process_name (str): Name of the process (e.g., 'notepad.exe').
-
+    Locks the current user session (equivalent to Win+L).
+    
     Returns:
-        int: PID if found, 0 otherwise.
+        None
     """
     
     # CODE START
-    h_snapshot = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
-    if h_snapshot == -1: return 0
-    pe = PROCESSENTRY32()
-    pe.dwSize = ctypes.sizeof(PROCESSENTRY32)
-    if kernel32.Process32FirstW(h_snapshot, ctypes.byref(pe)):
-        while True:
-            if pe.szExeFile == process_name:
-                kernel32.CloseHandle(h_snapshot)
-                return pe.th32ProcessID
-            if not kernel32.Process32NextW(h_snapshot, ctypes.byref(pe)):
-                break
-    kernel32.CloseHandle(h_snapshot)
-    return 0
+    user32.LockWorkStation()
     # CODE END
+
+
+
+def systemInfo():
+    """
+    Returns basic OS version information using RtlGetVersion.
+    More accurate than GetVersionEx.
+
+    Returns:
+        dict: {
+            'major': int,
+            'minor': int,
+            'build': int,
+            'sp_major': int,
+            'sp_minor': int,
+            'csd': str
+        }
+    """
+    
+    # CODE START
+    RtlGetVersion = nt.RtlGetVersion
+    ver = OSVERSIONINFOEXW()
+    ver.dwOSVersionInfoSize = ctypes.sizeof(ver)
+    RtlGetVersion(ctypes.byref(ver))
+    return {
+        "major": ver.dwMajorVersion,
+        "minor": ver.dwMinorVersion,
+        "build": ver.dwBuildNumber,
+        "sp_major": ver.wServicePackMajor,
+        "sp_minor": ver.wServicePackMinor,
+        "csd": ver.szCSDVersion,
+    }
+    # CODE END
+
+# FUNCTIONS END
+
+# SYSTEM FUNCTIONS END
+
+
+
+# PROCESS FUNCTONS START
+
+# WinAPI CONSTANTS START
+PROCESS_ALL_ACCESS = 0x001F0FFF
+TH32CS_SNAPPROCESS = 0x00000002
+TH32CS_SNAPTHREAD  = 0x00000004
+THREAD_QUERY_LIMITED_INFORMATION = 0x0800
+PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+# WinAPI CONSTANTS END
+
+# STRUCTURES START
+class PROCESSENTRY32(ctypes.Structure):
+    _fields_ = [
+        ("dwSize",              ctypes.c_uint32),
+        ("cntUsage",            ctypes.c_uint32),
+        ("th32ProcessID",       ctypes.c_uint32),
+        ("th32DefaultHeapID",   ctypes.c_size_t),
+        ("th32ModuleID",        ctypes.c_uint32),
+        ("cntThreads",          ctypes.c_uint32),
+        ("th32ParentProcessID", ctypes.c_uint32),
+        ("pcPriClassBase",      ctypes.c_int32),
+        ("dwFlags",             ctypes.c_uint32),
+        ("szExeFile",           ctypes.c_wchar * 260)
+    ]
+
+class THREADENTRY32(ctypes.Structure):
+    _fields_ = [
+        ("dwSize", wintypes.DWORD),
+        ("cntUsage", wintypes.DWORD),
+        ("th32ThreadID", wintypes.DWORD),
+        ("th32OwnerProcessID", wintypes.DWORD),
+        ("tpBasePri", ctypes.c_long),
+        ("tpDeltaPri", ctypes.c_long),
+        ("dwFlags", wintypes.DWORD),
+    ]
+
+class MODULEENTRY32(ctypes.Structure):
+    _fields_ = [
+        ("dwSize", wintypes.DWORD),
+        ("th32ModuleID", wintypes.DWORD),
+        ("th32ProcessID", wintypes.DWORD),
+        ("GlblcntUsage", wintypes.DWORD),
+        ("ProccntUsage", wintypes.DWORD),
+        ("modBaseAddr", ctypes.POINTER(ctypes.c_byte)),
+        ("modBaseSize", wintypes.DWORD),
+        ("hModule", wintypes.HMODULE),
+        ("szModule", ctypes.c_wchar * 256),
+        ("szExePath", ctypes.c_wchar * 260),
+    ]
+
+HRESULT = ctypes.c_long
+
+CreateToolhelp32Snapshot = kernel32.CreateToolhelp32Snapshot
+Process32First = kernel32.Process32First
+Process32Next  = kernel32.Process32Next
+Thread32First  = kernel32.Thread32First
+Thread32Next   = kernel32.Thread32Next
+OpenThread     = kernel32.OpenThread
+CloseHandle    = kernel32.CloseHandle
+GetThreadDescription = ctypes.windll.kernel32.GetThreadDescription
+GetThreadDescription.argtypes = [wintypes.HANDLE, ctypes.POINTER(ctypes.c_wchar_p)]
+GetThreadDescription.restype  = HRESULT
+# STRUCTURES END
+
+# FUNCTIONS START
+def getPids(process_name: str):
+    """
+    Returns a list of all PIDs for a given process name.
+
+    Args:
+        process_name (str): Executable name, e.g. "chrome.exe".
+
+    Returns:
+        list[int]: List of matching process IDs.
+    """
+    
+    # CODE START
+    snap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
+    if snap == -1:
+        return []
+    entry = PROCESSENTRY32()
+    entry.dwSize = ctypes.sizeof(PROCESSENTRY32)
+    pids = []
+    if kernel32.Process32FirstW(snap, ctypes.byref(entry)):
+        while True:
+            exe = entry.szExeFile
+            if exe.lower() == process_name.lower():
+                pids.append(entry.th32ProcessID)
+            if not kernel32.Process32NextW(snap, ctypes.byref(entry)):
+                break
+    kernel32.CloseHandle(snap)
+    return pids
+    # CODE END
+
 
 
 
@@ -1997,23 +2130,172 @@ def processFreeze(pid, state=True):
 
 
 
+def getThreads(pid: int):
+    """
+    Returns a list of thread IDs for a given process ID.
+    """
+    
+    # CODE START
+    snap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0)
+    if snap == -1:
+        return []
+    entry = THREADENTRY32()
+    entry.dwSize = ctypes.sizeof(THREADENTRY32)
+    tids = []
+    if kernel32.Thread32First(snap, ctypes.byref(entry)):
+        while True:
+            if entry.th32OwnerProcessID == pid:
+                tids.append(entry.th32ThreadID)
+
+            if not kernel32.Thread32Next(snap, ctypes.byref(entry)):
+                break
+
+    kernel32.CloseHandle(snap)
+    return tids
+    # CODE END
+
+
+
+def freezeThread(tid: int, state=True):
+    """
+    Suspends or resumes a single thread by its thread ID.
+
+    Args:
+        tid (int): Thread ID.
+        state (bool): True to suspend, False to resume.
+
+    Returns:
+        bool: True if successful.
+    """
+    
+    # CODE START
+    THREAD_SUSPEND_RESUME = 0x0002
+    hThread = kernel32.OpenThread(THREAD_SUSPEND_RESUME, False, tid)
+    if not hThread:
+        return False
+    try:
+        if state:
+            res = kernel32.SuspendThread(hThread)
+        else:
+            res = kernel32.ResumeThread(hThread)
+        return res != -1
+    finally:
+        kernel32.CloseHandle(hThread)
+    # CODE END
+
+
 def freezeByName(process_name, state=True):
     """
-    Wrapper for processFreeze. 
-    Finds PID by name and changes its execution state.
+    Wrapper for processFreeze.
+    Freezes or unfreezes all processes with the given name.
 
     Args:
         process_name (str): Target process name.
         state (bool): True to freeze, False to unfreeze.
+
+    Returns:
+        bool: True if at least one process was affected.
     """
     
     # CODE START
-    pid = getPid(process_name)
-    if pid != 0:
-        return processFreeze(pid, state)
-    return False
+    pids = getPids(process_name)
+    ok = False
+
+    for pid in pids:
+        if pid != 0:
+            if processFreeze(pid, state):
+                ok = True
+    return ok
     # CODE END
 
-# SYSTEM FUNCTIONS END
+
+
+def getProcessName(pid: int) -> str | None:
+    """
+    Returns the executable name for a given PID.
+
+    Args:
+        pid (int): Process ID.
+
+    Returns:
+        str | None: Executable name or None if not found.
+    """
+    
+    # CODE START
+    hSnap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
+    if hSnap == -1:
+        return None
+    entry = PROCESSENTRY32()
+    entry.dwSize = ctypes.sizeof(PROCESSENTRY32)
+    name = None
+    if kernel32.Process32FirstW(hSnap, ctypes.byref(entry)):
+        while True:
+            if entry.th32ProcessID == pid:
+                name = entry.szExeFile
+                break
+            if not kernel32.Process32NextW(hSnap, ctypes.byref(entry)):
+                break
+    kernel32.CloseHandle(hSnap)
+    return name
+    # CODE END
+
+
+
+def getProcessPath(pid: int) -> str | None:
+    """
+    Returns full executable path for a given PID.
+
+    Args:
+        pid (int): Process ID.
+
+    Returns:
+        str | None: Full path or None if unavailable.
+    """
+    
+    # CODE START
+    hProc = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+    if not hProc:
+        return None
+    buf = ctypes.create_unicode_buffer(260)
+    size = wintypes.DWORD(260)
+    ok = kernel32.QueryFullProcessImageNameW(hProc, 0, buf, ctypes.byref(size))
+    kernel32.CloseHandle(hProc)
+    return buf.value if ok else None
+    # CODE END
+
+
+
+def getProcessModules(pid: int):
+    """
+    Returns a list of loaded modules (DLLs) for a given process.
+
+    Args:
+        pid (int): Process ID.
+
+    Returns:
+        list[str]: List of module paths.
+    """
+    
+    # CODE START
+    TH32CS_SNAPMODULE = 0x00000008
+    TH32CS_SNAPMODULE32 = 0x00000010
+    snap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid)
+    if snap == -1:
+        return []
+    entry = MODULEENTRY32()
+    entry.dwSize = ctypes.sizeof(MODULEENTRY32)
+    modules = []
+    if kernel32.Module32FirstW(snap, ctypes.byref(entry)):
+        while True:
+            modules.append(entry.szExePath)
+            if not ctypes.windll.kernel32.Module32NextW(snap, ctypes.byref(entry)):
+                break
+    kernel32.CloseHandle(snap)
+    return modules
+    # CODE END
+
+# FUNCTIONS END
+
+# PROCESS FUNCTIONS END
 
 # WINAPIMOVEMENT.PY END
