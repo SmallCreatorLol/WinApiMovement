@@ -49,3 +49,23 @@
   FIXED:
     - Corrected thread snapshot iteration stability.
     - Minor cleanup in PROCESS structures and constants.
+
+
+
+[2026-05-07 22:23:00] Version 1.0.6
+  ADDED:
+    - Added global mouse event hooks via add_trig().
+    - Added ANY-trigger for all mouse events.
+    - Added raw wheel delta extraction for callbacks.
+    - Added X1/X2 mouse button support in hooks.
+    - Added high-precision event timestamps for TAS recording.
+
+  CHANGED:
+    - Expanded README Mouse section with new hook functions.
+    - Improved internal mouse event routing for lower latency.
+    - Unified naming style for mouse event constants.
+    - Better HumanityMoveTo logic
+
+  FIXED:
+    - Corrected rare wheel horizontal delta misread.
+    - Minor cleanup in MOUSE structures and callback dispatch.
