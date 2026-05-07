@@ -12,6 +12,10 @@ import math
 
 
 # FOR WORK START
+def nothing():
+    '''uh.. oh. what is that? why is here bruh.'''
+    return None
+
 libc = ctypes.cdll.msvcrt
 user32 = ctypes.windll.user32
 gdi32 = ctypes.windll.gdi32
@@ -23,6 +27,8 @@ PowrProf = ctypes.windll.PowrProf
 # FOR WORK END
 
 # MOUSE FUNCTIONS START
+
+# born: 08.04.2025 — started as a clicker, became a monster :)
 
 # WinAPI CONSTANTS START
 INPUT_MOUSE = 0
@@ -36,6 +42,21 @@ MOUSEEVENTF_XDOWN = 0x0080
 MOUSEEVENTF_XUP = 0x0100
 MOUSEEVENTF_WHEEL = 0x0800
 MOUSEEVENTF_HWHEEL = 0x1000
+WH_MOUSE_LL = 14
+WM_MOUSEMOVE    = 0x0200
+WM_LBUTTONDOWN  = 0x0201
+WM_LBUTTONUP    = 0x0202
+WM_RBUTTONDOWN  = 0x0204
+WM_RBUTTONUP    = 0x0205
+WM_MBUTTONDOWN  = 0x0207
+WM_MBUTTONUP    = 0x0208
+WM_MOUSEWHEEL   = 0x020A
+WM_MOUSEHWHEEL  = 0x020E
+WM_XBUTTONDOWN  = 0x020B
+WM_XBUTTONUP    = 0x020C
+XBUTTON1 = 1
+XBUTTON2 = 2
+WHEEL_DELTA = 120
 # WinAPI CONSTANTS END
 
 # STRUCTURES START
@@ -54,6 +75,43 @@ class INPUT(ctypes.Structure):
         ("type", ctypes.c_ulong),
         ("mi", MOUSEINPUT)
     ]
+    
+class POINT(ctypes.Structure):
+    _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
+
+class MSLLHOOKSTRUCT(ctypes.Structure):
+    _fields_ = [
+        ("pt", POINT),
+        ("mouseData", wintypes.DWORD),
+        ("flags", wintypes.DWORD),
+        ("time", wintypes.DWORD),
+        ("dwExtraInfo", ctypes.c_void_p)
+    ]
+
+LowLevelMouseProc = ctypes.WINFUNCTYPE(
+    ctypes.c_int,
+    ctypes.c_int,
+    wintypes.WPARAM,
+    wintypes.LPARAM
+)
+
+LPMSLLHOOKSTRUCT = ctypes.POINTER(MSLLHOOKSTRUCT)
+user32.SetWindowsHookExW.argtypes = [ctypes.c_int, LowLevelMouseProc, wintypes.HINSTANCE, wintypes.DWORD]
+user32.SetWindowsHookExW.restype = wintypes.HHOOK
+user32.CallNextHookEx.argtypes = [wintypes.HHOOK, ctypes.c_int, wintypes.WPARAM, wintypes.LPARAM]
+user32.CallNextHookEx.restype = ctypes.c_int
+user32.UnhookWindowsHookEx.argtypes = [wintypes.HHOOK]
+user32.UnhookWindowsHookEx.restype = wintypes.BOOL
+user32.GetMessageW.argtypes = [ctypes.POINTER(wintypes.MSG), wintypes.HWND, wintypes.UINT, wintypes.UINT]
+user32.GetMessageW.restype = ctypes.c_int
+
+hHook = None
+HOOKPROC = None
+hook_thread = None
+hook_running = False
+
+mouse_triggers = {}
+any_trigger = None
 # STRUCTURES END
 
 # FUNCTIONS START
@@ -190,7 +248,6 @@ def click(x=None, y=None, times=1,interval=0, button='left'):
         else:
             raise TypeError("Invalid button")
         for _ in range(n):
-            # DOWN
             events[idx].type = INPUT_MOUSE
             events[idx].mi = MOUSEINPUT(0, 0, data, down, 0, None)
             idx += 1
@@ -330,7 +387,7 @@ def dragRel(dx, dy, steps=100, duration=1, button='left'):
 
 
 
-def humanityMoveTo(x, y, duration=0.4, roughness=1.0):
+def humanityMoveTo(x, y, speed=0.4, roughness=1.0):
     """
     Moves the cursor to an absolute position using a human‑like motion model
     with angle shifts, inertia, micro‑pauses, speed variation and final stabilization.
@@ -346,96 +403,96 @@ def humanityMoveTo(x, y, duration=0.4, roughness=1.0):
     """
     
     # CODE START
-    x1, y1 = position()
-    dist = math.hypot(x - x1, y - y1)
-    steps = int(dist / 4) + 25
-    cx, cy = x1, y1
-    if random.random() < 0.25:
-        time.sleep(random.uniform(0.02, 0.05))
-    start = time.perf_counter()
-    angle_offset = 0.0
-    angle_inertia = 0
-    base_step = dist / steps
-    speed_multiplier = 1.0
-    overshoot_done = False
-    overshoot_enabled = random.random() < 0.25
-    for i in range(steps):
-        t = i / (steps - 1)
-        if overshoot_enabled and not overshoot_done and t > 0.88:
-            overshoot_done = True
-            ox = x + random.uniform(3, 8)
-            oy = y + random.uniform(3, 8)
-            for _ in range(4):
-                dx = ox - cx
-                dy = oy - cy
-                d = math.hypot(dx, dy)
-                if d < 0.5:
-                    break
-                cx += dx / d * min(3, d)
-                cy += dy / d * min(3, d)
-                moveTo(int(cx), int(cy))
-                time.sleep(0.003)
-            for _ in range(5):
-                dx = x - cx
-                dy = y - cy
-                d = math.hypot(dx, dy)
-                if d < 0.5:
-                    break
-                cx += dx / d * min(2, d)
-                cy += dy / d * min(2, d)
-                moveTo(int(cx), int(cy))
-                time.sleep(0.004)
-            moveTo(x, y)
-            return
-        dx = x - cx
-        dy = y - cy
-        base_angle = math.atan2(dy, dx)
-        if angle_inertia > 0:
-            angle_inertia -= 1
-        else:
-            angle_offset += random.uniform(-0.05, 0.05) * roughness
-            angle_offset = max(min(angle_offset, 0.12), -0.12)
-        if random.random() < 0.05 * roughness:
-            angle_offset += random.uniform(-0.08, 0.08) * roughness
-            angle_inertia = random.randint(3, 7)
-            speed_multiplier *= random.uniform(1.07, 1.15)
-        if random.random() < 0.04:
-            time.sleep(random.uniform(0.015, 0.04))
-            angle_offset += random.uniform(-0.07, 0.07) * roughness
-            angle_inertia = random.randint(2, 5)
-            speed_multiplier *= random.uniform(0.85, 0.93)
-        speed_multiplier += (1.0 - speed_multiplier) * 0.1
-        final_angle = base_angle + angle_offset
-        step = base_step * speed_multiplier
-        cx += math.cos(final_angle) * step
-        cy += math.sin(final_angle) * step
-        if random.random() < 0.02 * roughness:
-            cx += random.uniform(-1.2, 1.2)
-            cy += random.uniform(-1.2, 1.2)
-        if t > 0.85:
-            cx += random.uniform(-0.2, 0.2)
-            cy += random.uniform(-0.2, 0.2)
-        moveTo(int(cx), int(cy))
-        elapsed = time.perf_counter() - start
-        remaining = duration - elapsed
-        left = steps - i - 1
-        if left > 0 and remaining > 0:
-            time.sleep(remaining / left)
-    for _ in range(random.randint(5, 9)):
-        dx = x - cx
-        dy = y - cy
-        d = math.hypot(dx, dy)
-        if d < 0.4:
-            break
-        step = min(1.8, d) * random.uniform(0.35, 0.55)
-        cx += (dx / d) * step
-        cy += (dy / d) * step
-        cx += random.uniform(-0.15, 0.15)
-        cy += random.uniform(-0.15, 0.15)
-        moveTo(int(cx), int(cy))
-        time.sleep(random.uniform(0.003, 0.007))
-    moveTo(int(x), int(y))
-
+    x1, y1 = None, None
+    while x1 != x and y1 != y:
+        x1, y1 = position()
+        dist = math.hypot(x - x1, y - y1)
+        steps = int(dist / 4) + 25
+        cx, cy = x1, y1
+        if random.random() < 0.25:
+            time.sleep(random.uniform(0.02, 0.05))
+        start = time.perf_counter()
+        angle_offset = 0.0
+        angle_inertia = 0
+        base_step = dist / steps
+        speed_multiplier = 1.0
+        overshoot_done = False
+        overshoot_enabled = random.random() < 0.25
+        for i in range(steps):
+            t = i / (steps - 1)
+            if overshoot_enabled and not overshoot_done and t > 0.88:
+                overshoot_done = True
+                ox = x + random.uniform(3, 8)
+                oy = y + random.uniform(3, 8)
+                for _ in range(4):
+                    dx = ox - cx
+                    dy = oy - cy
+                    d = math.hypot(dx, dy)
+                    if d < 0.5:
+                        break
+                    cx += dx / d * min(3, d)
+                    cy += dy / d * min(3, d)
+                    moveTo(int(cx), int(cy))
+                    time.sleep(0.003)
+                for _ in range(5):
+                    dx = x - cx
+                    dy = y - cy
+                    d = math.hypot(dx, dy)
+                    if d < 0.5:
+                        break
+                    cx += dx / d * min(2, d)
+                    cy += dy / d * min(2, d)
+                    moveTo(int(cx), int(cy))
+                    time.sleep(0.004)
+                moveTo(x, y)
+                return
+            dx = x - cx
+            dy = y - cy
+            base_angle = math.atan2(dy, dx)
+            if angle_inertia > 0:
+                angle_inertia -= 1
+            else:
+                angle_offset += random.uniform(-0.05, 0.05) * roughness
+                angle_offset = max(min(angle_offset, 0.12), -0.12)
+            if random.random() < 0.05 * roughness:
+                angle_offset += random.uniform(-0.08, 0.08) * roughness
+                angle_inertia = random.randint(3, 7)
+                speed_multiplier *= random.uniform(1.07, 1.15)
+            if random.random() < 0.04:
+                time.sleep(random.uniform(0.015, 0.04))
+                angle_offset += random.uniform(-0.07, 0.07) * roughness
+                angle_inertia = random.randint(2, 5)
+                speed_multiplier *= random.uniform(0.85, 0.93)
+            speed_multiplier += (1.0 - speed_multiplier) * 0.1
+            final_angle = base_angle + angle_offset
+            step = base_step * speed_multiplier
+            cx += math.cos(final_angle) * step
+            cy += math.sin(final_angle) * step
+            if random.random() < 0.02 * roughness:
+                cx += random.uniform(-1.2, 1.2)
+                cy += random.uniform(-1.2, 1.2)
+            if t > 0.85:
+                cx += random.uniform(-0.2, 0.2)
+                cy += random.uniform(-0.2, 0.2)
+            moveTo(int(cx), int(cy))
+            elapsed = time.perf_counter() - start
+            remaining = speed - elapsed
+            left = steps - i - 1
+            if left > 0 and remaining > 0:
+                time.sleep(remaining / left)
+        for _ in range(random.randint(5, 9)):
+            dx = x - cx
+            dy = y - cy
+            d = math.hypot(dx, dy)
+            if d < 0.4:
+                break
+            step = min(1.8, d) * random.uniform(0.35, 0.55)
+            cx += (dx / d) * step
+            cy += (dy / d) * step
+            cx += random.uniform(-0.15, 0.15)
+            cy += random.uniform(-0.15, 0.15)
+            moveTo(int(cx), int(cy))
+            time.sleep(random.uniform(0.003, 0.007))
     # CODE END
 
 
@@ -513,6 +570,186 @@ def humanityDragRel(dx, dy, duration=0.4, roughness=1.0, button='left'):
     humanityDragTo(target_x, target_y, duration=duration, roughness=roughness, button=button)
     # CODE END
 
+
+
+def add_trig(event_name, callback):
+    """
+    Adds a trigger callback for a specific mouse event.
+
+    Args:
+        event_name (_type_): _description_
+        callback (function): _description_
+        
+    Returns:
+        None
+    """
+    
+    # CODE START
+    global any_trigger
+    if event_name == "any":
+        any_trigger = callback
+    else:
+        mouse_triggers[event_name] = callback
+    _ensure_hook_running()
+    # CODE END
+
+
+
+def remove_trig(event_name):
+    """
+    Removes a previously added trigger callback for a mouse event.
+
+    Args:
+        event_name (_type_): _description_
+    
+    Returns:
+        None
+    """
+    
+    # CODE START
+    global any_trigger
+    if event_name == "any":
+        any_trigger = None
+    elif event_name in mouse_triggers:
+        del mouse_triggers[event_name]
+    _stop_hook_if_needed()
+    # CODE END
+
+
+
+def fire(event_name, x, y, extra=None):
+    """
+    Hires the appropriate trigger callback for a mouse event.
+
+    Args:
+        event_name (_type_): _description_
+        x (_type_): _description_
+        y (_type_): _description_
+        extra (_type_, optional): _description_. Defaults to None.
+    
+    Returns:
+        None
+    """
+    
+    # CODE START
+    if event_name in mouse_triggers:
+        if extra is None:
+            mouse_triggers[event_name](x, y)
+        else:
+            mouse_triggers[event_name](x, y, extra)
+    if any_trigger:
+        if extra is None:
+            any_trigger(event_name, x, y)
+        else:
+            any_trigger(event_name, x, y, extra)
+    # CODE END
+
+
+
+def wnd_mouse_proc(nCode, wParam, lParam):
+    """
+
+    Args:
+        nCode (_type_): _description_
+        wParam (_type_): _description_
+        lParam (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    
+    # CODE START
+    if nCode < 0:
+        return user32.CallNextHookEx(hHook, nCode, wParam, lParam)
+    data = ctypes.cast(lParam, LPMSLLHOOKSTRUCT).contents
+    x, y = data.pt.x, data.pt.y
+    if wParam == WM_LBUTTONDOWN:
+        fire("left_down", x, y)
+    elif wParam == WM_LBUTTONUP:
+        fire("left_up", x, y)
+    elif wParam == WM_RBUTTONDOWN:
+        fire("right_down", x, y)
+    elif wParam == WM_RBUTTONUP:
+        fire("right_up", x, y)
+    elif wParam == WM_MBUTTONDOWN:
+        fire("middle_down", x, y)
+    elif wParam == WM_MBUTTONUP:
+        fire("middle_up", x, y)
+    elif wParam == WM_XBUTTONDOWN:
+        btn = data.mouseData >> 16
+        fire("x1_down" if btn == XBUTTON1 else "x2_down", x, y)
+    elif wParam == WM_XBUTTONUP:
+        btn = data.mouseData >> 16
+        fire("x1_up" if btn == XBUTTON1 else "x2_up", x, y)
+    elif wParam == WM_MOUSEWHEEL:
+        delta = ctypes.c_short(data.mouseData >> 16).value
+        fire("scroll_up" if delta > 0 else "scroll_down", x, y, delta)
+    elif wParam == WM_MOUSEHWHEEL:
+        delta = ctypes.c_short(data.mouseData >> 16).value
+        fire("scroll_right" if delta > 0 else "scroll_left", x, y, delta)
+    return user32.CallNextHookEx(hHook, nCode, wParam, lParam)
+    # CODE END
+
+
+
+def _hook_loop():
+    """
+    Internal function that runs the mouse hook loop in a separate thread.
+    """
+    
+    # CODE START
+    global hHook, HOOKPROC, hook_running
+    HOOKPROC = LowLevelMouseProc(wnd_mouse_proc)
+    hHook = user32.SetWindowsHookExW(WH_MOUSE_LL,HOOKPROC,0,0)
+    if not hHook:
+        hook_running = False
+        return
+    msg = wintypes.MSG()
+    while hook_running and user32.GetMessageW(ctypes.byref(msg), 0, 0, 0):
+        user32.TranslateMessage(ctypes.byref(msg))
+        user32.DispatchMessageW(ctypes.byref(msg))
+    if hHook:
+        user32.UnhookWindowsHookEx(hHook)
+        hHook = None
+    # CODE END
+
+
+
+def _ensure_hook_running():
+    """
+    ensures that the mouse hook is running if there are any triggers registered.
+    
+    Returns:
+        None
+    """
+    
+    # CODE START
+    global hook_thread, hook_running
+    if hook_running:
+        return
+    if not mouse_triggers and not any_trigger:
+        return
+    hook_running = True
+    hook_thread = threading.Thread(target=_hook_loop, daemon=True)
+    hook_thread.start()
+    # CODE END
+
+
+
+def _stop_hook_if_needed():
+    """
+    Stops the mouse hook if there are no triggers registered.
+    """
+    
+    # CODE START
+    global hook_running
+    if mouse_triggers or any_trigger:
+        return
+    if hook_running:
+        hook_running = False
+        user32.PostThreadMessageW(hook_thread.ident, 0x0012, 0, 0)
+    # CODE END
+
 # FUNCTIONS END
 
 # MOUSE FUNCTIONS END
@@ -530,6 +767,8 @@ RIDEV_INPUTSINK = 0x00000100
 RID_INPUT = 0x10000003
 WM_INPUT = 0x00FF
 KEYEVENTF_SCANCODE = 0x0008
+CF_UNICODETEXT = 13
+GMEM_MOVEABLE = 0x0002
 special_keys = {
     "ctrl": 0x11,
     "control": 0x11,
@@ -537,7 +776,6 @@ special_keys = {
     "alt": 0x12,
     "menu": 0x12,
     "enter": 0x0D,
-    "return": 0x0D,
     "space": 0x20,
     "tab": 0x09,
     "esc": 0x1B,
@@ -551,7 +789,31 @@ special_keys = {
     "down": 0x28,
     "left": 0x25,
     "right": 0x27,
-    "win": 0x5b
+    "win": 0x5b,
+    "f1": 0x70,
+    "f2": 0x71,
+    "f3": 0x72,
+    "f4": 0x73,
+    "f5": 0x74,
+    "f6": 0x75,
+    "f7": 0x76,
+    "f8": 0x77,
+    "f9": 0x78,
+    "f10": 0x79,
+    "f11": 0x7A,
+    "f12": 0x7B,
+    "f13": 0x7C,
+    "f14": 0x7D,
+    "f15": 0x7E,
+    "f16": 0x7F,
+    "f17": 0x80,
+    "f18": 0x81,
+    "f19": 0x82,
+    "f20": 0x83,
+    "f21": 0x84,
+    "f22": 0x85,
+    "f23": 0x86,
+    "f24": 0x87
 }
 # WinAPI CONSTANTS END
 
@@ -816,13 +1078,16 @@ def addHotkey(key, callback):
     
     # CODE START
     global started
-    key = key.lower()
-    if key in special_keys:
-        vk = special_keys[key]
-    elif len(key) == 1:
-        vk = ord(key.upper())
+    if key.lower() == 'any':
+        vk = 'ANY_KEY_MARKER'
     else:
-        raise TypeError(f"Unknown key: {key}")
+        key = key.lower()
+        if key in special_keys:
+            vk = special_keys[key]
+        elif len(key) == 1:
+            vk = ord(key.upper())
+        else:
+            raise TypeError(f"Unknown key: {key}")
     callbacks.append((vk, callback))
     if not started:
         started = True
@@ -903,6 +1168,87 @@ def removeCombo(keys, callback):
 
 
 
+def copyToClipBoard(text: str) -> bool:
+    """
+    Copies a string to the Windows clipboard using Unicode format.
+
+    Args:
+        text (str): The string content to be copied.
+
+    Returns:
+        bool: True if successful, False otherwise.
+    """
+    
+    # CODE START
+    if not user32.OpenClipboard(None):
+        return False
+    try:
+        user32.EmptyClipboard()
+        raw = text.encode('utf-16-le')
+        size = len(raw) + 2
+        h_mem = kernel32.GlobalAlloc(GMEM_MOVEABLE, size)
+        if h_mem:
+            ptr = kernel32.GlobalLock(h_mem)
+            if ptr:
+                ctypes.memmove(ptr, raw, len(raw))
+                ctypes.memset(ptr + len(raw), 0, 2)
+                kernel32.GlobalUnlock(h_mem)
+                if user32.SetClipboardData(CF_UNICODETEXT, h_mem):
+                    return True
+            kernel32.GlobalFree(h_mem)
+    finally:
+        user32.CloseClipboard()
+    return False
+    # CODE END
+
+
+
+def getFromClipBoard():
+    """
+    Retrieves the current text content from the clipboard.
+
+    Returns:
+        Optional[str]: The clipboard text if available, None otherwise.
+    """
+    
+    # CODE START
+    if not user32.OpenClipboard(None):
+        return None
+    
+    try:
+        if user32.IsClipboardFormatAvailable(CF_UNICODETEXT):
+            h_mem = user32.GetClipboardData(CF_UNICODETEXT)
+            if h_mem:
+                ptr = kernel32.GlobalLock(h_mem)
+                text = ctypes.c_wchar_p(ptr).value
+                kernel32.GlobalUnlock(h_mem)
+                return text
+    finally:
+        user32.CloseClipboard()
+    return None
+    # CODE END
+
+
+
+def eraseClipBoard() -> bool:
+    """
+    Clears all data from the Windows clipboard.
+
+    Returns:
+        bool: True if successful, False otherwise.
+    """
+    
+    # CODE START
+    if not user32.OpenClipboard(None):
+        return False
+    try:
+        return bool(user32.EmptyClipboard())
+    finally:
+        user32.CloseClipboard()
+    # CODE END
+
+
+
 def _wnd_proc(hWnd,msg,wParam,lParam):
     """
     Internal RAWINPUT window procedure.
@@ -935,13 +1281,16 @@ def _wnd_proc(hWnd,msg,wParam,lParam):
             key_state[vk] = True
         elif m == 0x0101:
             key_state[vk] = False
-        for code,cb in callbacks:
-            if isinstance(code, tuple):
-                if all(key_state.get(v, False) for v in code):
-                    cb()
-            else:
-                if m == 0x0100 and code == vk:
-                    cb()
+        vk_to_name = {v: k for k, v in special_keys.items()}
+        for code, cb in callbacks:
+            if m == 0x0100 and (code == vk or code == 'ANY_KEY_MARKER'):
+                char = vk_to_name.get(vk)
+                if not char:
+                    try:
+                        char = chr(vk).lower()
+                    except:
+                        char = f"VK_{vk}"
+                cb(char)
     return user32.DefWindowProcW(hWnd,msg,wParam,ctypes.c_void_p(lParam))
     # CODE END
 
@@ -1318,7 +1667,6 @@ def locateOnScreen(path, confidence=0.9, region=None, minSearchTime=0):
     with open(path, 'rb') as f:
         data = f.read()
         nw, nh = struct.unpack('<ii', data[18:26])
-        # Измени эти строки в WinApiMovement.py
         nw, nh = struct.unpack('<ii', data[18:26])
         offset = struct.unpack('<I', data[10:14])[0]
         raw = data[offset:]
@@ -1529,7 +1877,7 @@ def pixelMatchesColorRaw(x,y,color,tolerance,screen_raw,sw):
     g=screen_raw[i+1]
     r=screen_raw[i+2]
     er,eg,eb=color
-    return abs(r-er)<=tolerance and abs(g-eg)<=tolerance and abs
+    return abs(r-er)<=tolerance and abs(g-eg)<=tolerance and abs(b-eb) <= tolerance
     # CODE END
 
 # FUNCTIONS END
@@ -1539,6 +1887,8 @@ def pixelMatchesColorRaw(x,y,color,tolerance,screen_raw,sw):
 
 
 # SOUND FUNCTIONS START
+
+# TODO: add support for carbon microphones (joke lol.)
 
 # WinAPI CONSTANTS START
 SND_NODEFAULT  = 0x0002
@@ -1624,7 +1974,6 @@ def getAudioOutputDevices():
     devices = []
     caps = WAVEOUTCAPSW()
     for i in range(count):
-        # 32 - это размер структуры на x64
         if ctypes.windll.winmm.waveOutGetDevCapsW(i, ctypes.byref(caps), ctypes.sizeof(caps)) == 0:
             devices.append(caps.szPname)
     return devices
@@ -2104,7 +2453,7 @@ def getPids(process_name: str):
 
 def processFreeze(pid, state=True):
     """
-    KILLEER FEATURE: Suspends or resumes all threads in a process.
+    Suspends or resumes all threads in a process.
     Effectively stops time for the target application.
 
     Args:
