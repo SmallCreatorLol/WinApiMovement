@@ -89,7 +89,7 @@ Get process modules (DLL list)                     |          getProcessModules(
                                                    |                                                                                          
                                                    |                                                                                          
 AUTHOR: Rostik.                                    |                                                                                          
-version: 1.0.5                                     |                                                                                          
+version: 1.0.6                                     |                                                                                          
 created v1: 8 april 2026                           |                                                                                          
 Creating time: 30 days                             |                                                                                          
 Created: 7 may 2026                                |                                                                                          
