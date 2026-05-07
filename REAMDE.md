@@ -25,6 +25,10 @@ High‑speed clicking (batched SendInput)            |          click(times=1000
 Vertical and horizontal scrolling                  |          scroll(vertical=5); scroll(horizontal=3)                                        
 Drag and drop                                      |          dragTo(100, 100); dragRel(50, 0)                                                
 humanity drag; move                                |          humanityMoveTo(); humanityMoveRel(); humanityDragTo(); humanityDragRel();       
+Global mouse event hooks                           |          add_trig('left_down', callback)                                                 
+ANY‑trigger for all mouse events                   |          add_trig('any', callback)                                                       
+Raw wheel delta access                             |          callback(event, x, y, delta)                                                    
+X1/X2 button support                               |          mouseDown('x1'); mouseUp('x2')                                                  
                                                    |                                                                                          
 Keyboard                                           |                                                                                          
                                                    |                                                                                          
@@ -87,8 +91,8 @@ Get process modules (DLL list)                     |          getProcessModules(
 AUTHOR: Rostik.                                    |                                                                                          
 version: 1.0.5                                     |                                                                                          
 created v1: 8 april 2026                           |                                                                                          
-Creating time: 23 days                             |                                                                                          
-Created: 26 April 2026                             |                                                                                          
+Creating time: 30 days                             |                                                                                          
+Created: 7 may 2026                                |                                                                                          
                                                    |                                                                                          
                                                    |                                                                                          
 Why WinApiMovement?
