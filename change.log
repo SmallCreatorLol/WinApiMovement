@@ -69,3 +69,14 @@
   FIXED:
     - Corrected rare wheel horizontal delta misread.
     - Minor cleanup in MOUSE structures and callback dispatch.
+
+
+
+[2026-05-27 18:48:00] verison 1.0.7
+   ADDED:
+    - Added new mouse function getAngle on mouse
+   CHANGED:
+    - Global changes in structure.
+    - Updated hooks in keyboard and mouse
+  FIXED:
+    - NONE
