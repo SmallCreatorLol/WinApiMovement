@@ -13,7 +13,7 @@ import math
 
 # FOR WORK START
 def nothing():
-    '''uh.. oh. what is that? why is here bruh.'''
+    '''uh.. oh. what is that? why is here bruh.''' # MOST USEFUL FUNCTION THERE DONT DELETE THES
     return None
 
 libc = ctypes.cdll.msvcrt
@@ -67,7 +67,7 @@ class MOUSEINPUT(ctypes.Structure):
         ("mouseData", ctypes.c_ulong),
         ("dwFlags", ctypes.c_ulong),
         ("time", ctypes.c_ulong),
-        ("dwExtraInfo", ctypes.POINTER(ctypes.c_ulong))
+        ("dwExtraInfo", ctypes.c_void_p)
     ]
 
 class INPUT(ctypes.Structure):
@@ -114,641 +114,667 @@ mouse_triggers = {}
 any_trigger = None
 # STRUCTURES END
 
-# FUNCTIONS START
-def position():
-    """
-    Returns the current mouse cursor position.
+class mouse:
 
-    Returns:
-        tuple[int, int]: (x, y) coordinates of the cursor.
-    """
-    
-    # CODE START
-    point = (ctypes.c_long * 2)()
-    user32.GetCursorPos(point)
-    return point[0], point[1]
-    # CODE END
+    # FUNCTIONS START
+    @staticmethod
+    def position():
+        """
+        Returns the current mouse cursor position.
 
-
-
-def mouseUp(button='left'):
-    """
-    Releases a mouse button (button up event).
-
-    Args:
-        button (str): Which button to release.
-            'left', 'right', 'middle', 'x1', or 'x2'.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    data = 0
-    if button == 'left':
-        event = MOUSEEVENTF_LEFTUP
-    elif button == 'right':
-        event = MOUSEEVENTF_RIGHTUP
-    elif button == 'middle':
-        event = MOUSEEVENTF_MIDDLEUP
-    elif button == 'x1':
-        event = MOUSEEVENTF_XUP
-        data = 0x0001
-    elif button == 'x2':
-        event = MOUSEEVENTF_XUP
-        data = 0x0002
-    else:
-        raise TypeError("Invalid button")
-    input_event = INPUT()
-    input_event.type = INPUT_MOUSE
-    input_event.mi = MOUSEINPUT(0, 0, data, event, 0, None)
-    user32.SendInput(1, ctypes.byref(input_event), ctypes.sizeof(INPUT))
-    # CODE END
+        Returns:
+            tuple[int, int]: (x, y) coordinates of the cursor.
+        """
+        
+        # CODE START
+        point = (ctypes.c_long * 2)()
+        user32.GetCursorPos(point)
+        return point[0], point[1]
+        # CODE END
 
 
+    @staticmethod
+    def mouseUp(button='left'):
+        """
+        Releases a mouse button (button up event).
 
-def mouseDown(button='left'):
-    """
-    Presses and holds a mouse button (button down event).
+        Args:
+            button (str): Which button to release.
+                'left', 'right', 'middle', 'x1', or 'x2'.
 
-    Args:
-        button (str): Which button to press.
-            'left', 'right', 'middle', 'x1', or 'x2'.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    data = 0
-    if button == 'left':
-        event = MOUSEEVENTF_LEFTDOWN
-    elif button == 'right':
-        event = MOUSEEVENTF_RIGHTDOWN
-    elif button == 'middle':
-        event = MOUSEEVENTF_MIDDLEDOWN
-    elif button == 'x1':
-        event = MOUSEEVENTF_XDOWN
-        data = 0x0001
-    elif button == 'x2':
-        event = MOUSEEVENTF_XDOWN
-        data = 0x0002
-    else:
-        raise TypeError("Invalid button")
-    input_event = INPUT()
-    input_event.type = INPUT_MOUSE
-    input_event.mi = MOUSEINPUT(0, 0, data, event, 0, None)
-    user32.SendInput(1, ctypes.byref(input_event), ctypes.sizeof(INPUT))
-    # CODE END
-
-
-
-def click(x=None, y=None, times=1,interval=0, button='left'):
-    """
-    Performs one or multiple mouse clicks.
-
-    Args:
-        x (int|None): X coordinate to click at. If None, uses current position.
-        y (int|None): Y coordinate to click at.
-        times (int): Number of clicks.
-        interval (float): Delay between clicks.
-        button (str): Mouse button to use.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    if x is not None and y is not None:
-        user32.SetCursorPos(x, y)
-    BATCH = 8
-    data = 0
-    while times > 0:
-        n = min(times, BATCH)
-        total = n * 2
-        events = (INPUT * total)()
-        idx = 0
+        Returns:
+            None
+        """
+        
+        # CODE START
+        data = 0
         if button == 'left':
-            down = MOUSEEVENTF_LEFTDOWN
-            up = MOUSEEVENTF_LEFTUP
+            event = MOUSEEVENTF_LEFTUP
         elif button == 'right':
-            down = MOUSEEVENTF_RIGHTDOWN
-            up = MOUSEEVENTF_RIGHTUP
+            event = MOUSEEVENTF_RIGHTUP
         elif button == 'middle':
-            down = MOUSEEVENTF_MIDDLEDOWN
-            up = MOUSEEVENTF_MIDDLEUP
+            event = MOUSEEVENTF_MIDDLEUP
         elif button == 'x1':
-            down = MOUSEEVENTF_XDOWN
-            up = MOUSEEVENTF_XUP
+            event = MOUSEEVENTF_XUP
             data = 0x0001
         elif button == 'x2':
-            down = MOUSEEVENTF_XDOWN
-            up = MOUSEEVENTF_XUP
+            event = MOUSEEVENTF_XUP
             data = 0x0002
         else:
             raise TypeError("Invalid button")
-        for _ in range(n):
-            events[idx].type = INPUT_MOUSE
-            events[idx].mi = MOUSEINPUT(0, 0, data, down, 0, None)
-            idx += 1
-            events[idx].type = INPUT_MOUSE
-            events[idx].mi = MOUSEINPUT(0, 0, data, up, 0, None)
-            idx += 1
-        user32.SendInput(total, ctypes.byref(events), ctypes.sizeof(INPUT))
-        times -= n
-        time.sleep(interval)
-    # CODE END
+        input_event = INPUT()
+        input_event.type = INPUT_MOUSE
+        input_event.mi = MOUSEINPUT(0, 0, data, event, 0, None)
+        user32.SendInput(1, ctypes.byref(input_event), ctypes.sizeof(INPUT))
+        # CODE END
+
+
+    @staticmethod
+    def mouseDown(button='left'):
+        """
+        Presses and holds a mouse button (button down event).
+
+        Args:
+            button (str): Which button to press.
+                'left', 'right', 'middle', 'x1', or 'x2'.
+
+        Returns:
+            None
+        """
         
+        # CODE START
+        data = 0
+        if button == 'left':
+            event = MOUSEEVENTF_LEFTDOWN
+        elif button == 'right':
+            event = MOUSEEVENTF_RIGHTDOWN
+        elif button == 'middle':
+            event = MOUSEEVENTF_MIDDLEDOWN
+        elif button == 'x1':
+            event = MOUSEEVENTF_XDOWN
+            data = 0x0001
+        elif button == 'x2':
+            event = MOUSEEVENTF_XDOWN
+            data = 0x0002
+        else:
+            raise TypeError("Invalid button")
+        input_event = INPUT()
+        input_event.type = INPUT_MOUSE
+        input_event.mi = MOUSEINPUT(0, 0, data, event, 0, None)
+        user32.SendInput(1, ctypes.byref(input_event), ctypes.sizeof(INPUT))
+        # CODE END
+
+
+    @staticmethod
+    def click(x=None, y=None, times=1,interval=0, button='left'):
+        """
+        Performs one or multiple mouse clicks.
+
+        Args:
+            x (int|None): X coordinate to click at. If None, uses current position.
+            y (int|None): Y coordinate to click at.
+            times (int): Number of clicks.
+            interval (float): Delay between clicks.
+            button (str): Mouse button to use.
+
+        Returns:
+            None
+        """
         
-        
-def moveTo(x, y, steps=1, duration=0):
-    """
-    Moves the mouse cursor smoothly to (x, y).
-
-    Args:
-        x (int): Target X coordinate.
-        y (int): Target Y coordinate.
-        steps (int): Number of interpolation steps.
-        duration (float): Total movement time in seconds.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    start_x, start_y = position()
-    delta_x = (x - start_x) / steps
-    delta_y = (y - start_y) / steps
-    for i in range(steps):
-        new_x = int(start_x + delta_x * (i + 1))
-        new_y = int(start_y + delta_y * (i + 1))
-        user32.SetCursorPos(new_x, new_y)
-        time.sleep(duration / steps)
-    # CODE END
-
-
-
-def moveRel(dx, dy, steps=1, duration=0):
-    """
-    Moves the mouse cursor relative to its current position.
-
-    Args:
-        dx (int): Horizontal offset (positive = right, negative = left).
-        dy (int): Vertical offset (positive = down, negative = up).
-        steps (int): Number of interpolation steps.
-        duration (float): Total movement time in seconds.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    start_x, start_y = position()
-    target_x = start_x + dx
-    target_y = start_y + dy
-    moveTo(target_x, target_y, steps, duration)
-    # CODE END
-
-
-
-def scroll(vertical=0, horizontal=0):
-    """
-    Scrolls the mouse wheel vertically or horizontally.
-
-    Args:
-        vertical (int): Number of vertical scroll steps (positive = up, negative = down).
-        horizontal (int): Number of horizontal scroll steps (positive = right, negative = left).
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    if vertical != 0:
-        data = vertical * 120
-        event = MOUSEEVENTF_WHEEL
-    elif horizontal != 0:
-        data = horizontal * 120
-        event = MOUSEEVENTF_HWHEEL
-    else:
-        return
-    input_event = INPUT()
-    input_event.type = INPUT_MOUSE
-    input_event.mi = MOUSEINPUT(0, 0, data, event, 0, None)
-    user32.SendInput(1, ctypes.byref(input_event), ctypes.sizeof(INPUT))
-    # CODE END
-
-
-
-def dragTo(x, y, steps=100, duration=1, button='left'):
-    """
-    Holds a mouse button and drags the cursor to an absolute position.
-
-    Args:
-        x (int): Target X coordinate.
-        y (int): Target Y coordinate.
-        steps (int): Number of interpolation steps during movement.
-        duration (float): Total drag time in seconds.
-        button (str): Mouse button to hold during drag.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    mouseDown(button)
-    moveTo(x, y, steps, duration)
-    mouseUp(button)
-    # CODE END
-
-
-
-def dragRel(dx, dy, steps=100, duration=1, button='left'):
-    """
-    Holds a mouse button and drags the cursor relative to its current position.
-
-    Args:
-        dx (int): Horizontal offset.
-        dy (int): Vertical offset.
-        steps (int): Number of interpolation steps.
-        duration (float): Total drag time in seconds.
-        button (str): Mouse button to hold during drag.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    start_x, start_y = position()
-    target_x = start_x + dx
-    target_y = start_y + dy
-    dragTo(target_x, target_y, steps, duration, button)
-    # CODE END
-
-
-
-def humanityMoveTo(x, y, speed=0.4, roughness=1.0):
-    """
-    Moves the cursor to an absolute position using a human‑like motion model
-    with angle shifts, inertia, micro‑pauses, speed variation and final stabilization.
-
-    Args:
-        x (int): Target X coordinate.
-        y (int): Target Y coordinate.
-        duration (float): Total movement time in seconds.
-        roughness (float): Strength of angle changes, micro‑jerks and micro‑pauses.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    x1, y1 = None, None
-    while x1 != x and y1 != y:
-        x1, y1 = position()
-        dist = math.hypot(x - x1, y - y1)
-        steps = int(dist / 4) + 25
-        cx, cy = x1, y1
-        if random.random() < 0.25:
-            time.sleep(random.uniform(0.02, 0.05))
-        start = time.perf_counter()
-        angle_offset = 0.0
-        angle_inertia = 0
-        base_step = dist / steps
-        speed_multiplier = 1.0
-        overshoot_done = False
-        overshoot_enabled = random.random() < 0.25
-        for i in range(steps):
-            t = i / (steps - 1)
-            if overshoot_enabled and not overshoot_done and t > 0.88:
-                overshoot_done = True
-                ox = x + random.uniform(3, 8)
-                oy = y + random.uniform(3, 8)
-                for _ in range(4):
-                    dx = ox - cx
-                    dy = oy - cy
-                    d = math.hypot(dx, dy)
-                    if d < 0.5:
-                        break
-                    cx += dx / d * min(3, d)
-                    cy += dy / d * min(3, d)
-                    moveTo(int(cx), int(cy))
-                    time.sleep(0.003)
-                for _ in range(5):
-                    dx = x - cx
-                    dy = y - cy
-                    d = math.hypot(dx, dy)
-                    if d < 0.5:
-                        break
-                    cx += dx / d * min(2, d)
-                    cy += dy / d * min(2, d)
-                    moveTo(int(cx), int(cy))
-                    time.sleep(0.004)
-                moveTo(x, y)
-                return
-            dx = x - cx
-            dy = y - cy
-            base_angle = math.atan2(dy, dx)
-            if angle_inertia > 0:
-                angle_inertia -= 1
+        # CODE START
+        if x is not None and y is not None:
+            user32.SetCursorPos(x, y)
+        BATCH = 8
+        data = 0
+        while times > 0:
+            n = min(times, BATCH)
+            total = n * 2
+            events = (INPUT * total)()
+            idx = 0
+            if button == 'left':
+                down = MOUSEEVENTF_LEFTDOWN
+                up = MOUSEEVENTF_LEFTUP
+            elif button == 'right':
+                down = MOUSEEVENTF_RIGHTDOWN
+                up = MOUSEEVENTF_RIGHTUP
+            elif button == 'middle':
+                down = MOUSEEVENTF_MIDDLEDOWN
+                up = MOUSEEVENTF_MIDDLEUP
+            elif button == 'x1':
+                down = MOUSEEVENTF_XDOWN
+                up = MOUSEEVENTF_XUP
+                data = 0x0001
+            elif button == 'x2':
+                down = MOUSEEVENTF_XDOWN
+                up = MOUSEEVENTF_XUP
+                data = 0x0002
             else:
-                angle_offset += random.uniform(-0.05, 0.05) * roughness
-                angle_offset = max(min(angle_offset, 0.12), -0.12)
-            if random.random() < 0.05 * roughness:
-                angle_offset += random.uniform(-0.08, 0.08) * roughness
-                angle_inertia = random.randint(3, 7)
-                speed_multiplier *= random.uniform(1.07, 1.15)
-            if random.random() < 0.04:
-                time.sleep(random.uniform(0.015, 0.04))
-                angle_offset += random.uniform(-0.07, 0.07) * roughness
-                angle_inertia = random.randint(2, 5)
-                speed_multiplier *= random.uniform(0.85, 0.93)
-            speed_multiplier += (1.0 - speed_multiplier) * 0.1
-            final_angle = base_angle + angle_offset
-            step = base_step * speed_multiplier
-            cx += math.cos(final_angle) * step
-            cy += math.sin(final_angle) * step
-            if random.random() < 0.02 * roughness:
-                cx += random.uniform(-1.2, 1.2)
-                cy += random.uniform(-1.2, 1.2)
-            if t > 0.85:
-                cx += random.uniform(-0.2, 0.2)
-                cy += random.uniform(-0.2, 0.2)
-            moveTo(int(cx), int(cy))
-            elapsed = time.perf_counter() - start
-            remaining = speed - elapsed
-            left = steps - i - 1
-            if left > 0 and remaining > 0:
-                time.sleep(remaining / left)
-        for _ in range(random.randint(5, 9)):
-            dx = x - cx
-            dy = y - cy
-            d = math.hypot(dx, dy)
-            if d < 0.4:
-                break
-            step = min(1.8, d) * random.uniform(0.35, 0.55)
-            cx += (dx / d) * step
-            cy += (dy / d) * step
-            cx += random.uniform(-0.15, 0.15)
-            cy += random.uniform(-0.15, 0.15)
-            moveTo(int(cx), int(cy))
-            time.sleep(random.uniform(0.003, 0.007))
-    # CODE END
+                raise TypeError("Invalid button")
+            for _ in range(n):
+                events[idx].type = INPUT_MOUSE
+                events[idx].mi = MOUSEINPUT(0, 0, data, down, 0, None)
+                idx += 1
+                events[idx].type = INPUT_MOUSE
+                events[idx].mi = MOUSEINPUT(0, 0, data, up, 0, None)
+                idx += 1
+            user32.SendInput(total, ctypes.byref(events), ctypes.sizeof(INPUT))
+            times -= n
+            time.sleep(interval)
+        # CODE END
+            
+            
+    @staticmethod
+    def moveTo(x, y, steps=1, duration=0):
+        """
+        Moves the mouse cursor smoothly to (x, y).
 
+        Args:
+            x (int): Target X coordinate.
+            y (int): Target Y coordinate.
+            steps (int): Number of interpolation steps.
+            duration (float): Total movement time in seconds.
 
-
-def humanityMoveRel(dx, dy, duration=0.4, roughness=1.0):
-    """
-    Moves the cursor to a relative position using the same human‑like motion model
-    as humanityMoveTo, including angle shifts, inertia and final stabilization.
-
-    Args:
-        dx (int): Horizontal offset from the current cursor position.
-        dy (int): Vertical offset from the current cursor position.
-        duration (float): Total movement time in seconds.
-        roughness (float): Strength of human‑like irregularities.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    start_x, start_y = position()
-    target_x = start_x + dx
-    target_y = start_y + dy
-    humanityMoveTo(target_x, target_y, duration=duration, roughness=roughness)
-    # CODE END
-
-
-
-def humanityDragTo(x, y, duration=0.4, roughness=1.0, button='left'):
-    """
-    Holds a mouse button and drags the cursor to an absolute position
-    using the humanityMoveTo motion model with angle shifts, inertia,
-    micro‑pauses and final stabilization.
-
-    Args:
-        x (int): Target X coordinate.
-        y (int): Target Y coordinate.
-        duration (float): Total drag time in seconds.
-        roughness (float): Strength of human‑like irregularities.
-        button (str): Mouse button to hold during the drag.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    mouseDown(button=button)
-    humanityMoveTo(x=x,y=y,duration=duration,roughness=roughness)
-    mouseUp(button=button)
-    # CODE END
-
-
-
-def humanityDragRel(dx, dy, duration=0.4, roughness=1.0, button='left'):
-    """
-    Holds a mouse button and drags the cursor to a relative position
-    using the humanityMoveTo motion model with angle shifts, inertia,
-    micro‑pauses and final stabilization.
-
-    Args:
-        dx (int): Horizontal offset from the current cursor position.
-        dy (int): Vertical offset from the current cursor position.
-        duration (float): Total drag time in seconds.
-        roughness (float): Strength of human‑like irregularities.
-        button (str): Mouse button to hold during the drag.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    start_x, start_y = position()
-    target_x = start_x + dx
-    target_y = start_y + dy
-    humanityDragTo(target_x, target_y, duration=duration, roughness=roughness, button=button)
-    # CODE END
-
-
-
-def add_trig(event_name, callback):
-    """
-    Adds a trigger callback for a specific mouse event.
-
-    Args:
-        event_name (_type_): _description_
-        callback (function): _description_
+        Returns:
+            None
+        """
         
-    Returns:
-        None
-    """
-    
-    # CODE START
-    global any_trigger
-    if event_name == "any":
-        any_trigger = callback
-    else:
-        mouse_triggers[event_name] = callback
-    _ensure_hook_running()
-    # CODE END
+        # CODE START
+        start_x, start_y = mouse.position()
+        delta_x = (x - start_x) / steps
+        delta_y = (y - start_y) / steps
+        for i in range(steps):
+            new_x = int(start_x + delta_x * (i + 1))
+            new_y = int(start_y + delta_y * (i + 1))
+            user32.SetCursorPos(new_x, new_y)
+            time.sleep(duration / steps)
+        # CODE END
 
 
+    @staticmethod
+    def moveRel(dx, dy, steps=1, duration=0):
+        """
+        Moves the mouse cursor relative to its current position.
 
-def remove_trig(event_name):
-    """
-    Removes a previously added trigger callback for a mouse event.
+        Args:
+            dx (int): Horizontal offset (positive = right, negative = left).
+            dy (int): Vertical offset (positive = down, negative = up).
+            steps (int): Number of interpolation steps.
+            duration (float): Total movement time in seconds.
 
-    Args:
-        event_name (_type_): _description_
-    
-    Returns:
-        None
-    """
-    
-    # CODE START
-    global any_trigger
-    if event_name == "any":
-        any_trigger = None
-    elif event_name in mouse_triggers:
-        del mouse_triggers[event_name]
-    _stop_hook_if_needed()
-    # CODE END
+        Returns:
+            None
+        """
+        
+        # CODE START
+        start_x, start_y = mouse.position()
+        target_x = start_x + dx
+        target_y = start_y + dy
+        mouse.moveTo(target_x, target_y, steps, duration)
+        # CODE END
 
 
+    @staticmethod
+    def scroll(vertical=0, horizontal=0):
+        """
+        Scrolls the mouse wheel vertically or horizontally.
 
-def fire(event_name, x, y, extra=None):
-    """
-    Hires the appropriate trigger callback for a mouse event.
+        Args:
+            vertical (int): Number of vertical scroll steps (positive = up, negative = down).
+            horizontal (int): Number of horizontal scroll steps (positive = right, negative = left).
 
-    Args:
-        event_name (_type_): _description_
-        x (_type_): _description_
-        y (_type_): _description_
-        extra (_type_, optional): _description_. Defaults to None.
-    
-    Returns:
-        None
-    """
-    
-    # CODE START
-    if event_name in mouse_triggers:
-        if extra is None:
-            mouse_triggers[event_name](x, y)
+        Returns:
+            None
+        """
+        
+        # CODE START
+        if vertical != 0:
+            data = vertical * 120
+            event = MOUSEEVENTF_WHEEL
+        elif horizontal != 0:
+            data = horizontal * 120
+            event = MOUSEEVENTF_HWHEEL
         else:
-            mouse_triggers[event_name](x, y, extra)
-    if any_trigger:
-        if extra is None:
-            any_trigger(event_name, x, y)
+            return
+        input_event = INPUT()
+        input_event.type = INPUT_MOUSE
+        input_event.mi = MOUSEINPUT(0, 0, data, event, 0, None)
+        user32.SendInput(1, ctypes.byref(input_event), ctypes.sizeof(INPUT))
+        # CODE END
+
+
+    @staticmethod
+    def dragTo(x, y, steps=100, duration=1, button='left'):
+        """
+        Holds a mouse button and drags the cursor to an absolute position.
+
+        Args:
+            x (int): Target X coordinate.
+            y (int): Target Y coordinate.
+            steps (int): Number of interpolation steps during movement.
+            duration (float): Total drag time in seconds.
+            button (str): Mouse button to hold during drag.
+
+        Returns:
+            None
+        """
+        
+        # CODE START
+        mouse.mouseDown(button)
+        mouse.moveTo(x, y, steps, duration)
+        mouse.mouseUp(button)
+        # CODE END
+
+
+    @staticmethod
+    def dragRel(dx, dy, steps=100, duration=1, button='left'):
+        """
+        Holds a mouse button and drags the cursor relative to its current position.
+
+        Args:
+            dx (int): Horizontal offset.
+            dy (int): Vertical offset.
+            steps (int): Number of interpolation steps.
+            duration (float): Total drag time in seconds.
+            button (str): Mouse button to hold during drag.
+
+        Returns:
+            None
+        """
+        
+        # CODE START
+        start_x, start_y = mouse.position()
+        target_x = start_x + dx
+        target_y = start_y + dy
+        mouse.dragTo(target_x, target_y, steps, duration, button)
+        # CODE END
+
+
+    @staticmethod
+    def humanityMoveTo(x, y, speed=0.4, roughness=1.0):
+        """
+        Moves the cursor to an absolute position using a human‑like motion model
+        with angle shifts, inertia, micro‑pauses, speed variation and final stabilization.
+
+        Args:
+            x (int): Target X coordinate.
+            y (int): Target Y coordinate.
+            duration (float): Total movement time in seconds.
+            roughness (float): Strength of angle changes, micro‑jerks and micro‑pauses.
+
+        Returns:
+            None
+        """
+        
+        # CODE START
+        x1, y1 = None, None
+        while x1 != x and y1 != y:
+            x1, y1 = mouse.position()
+            dist = math.hypot(x - x1, y - y1)
+            steps = int(dist / 4) + 25
+            cx, cy = x1, y1
+            if random.random() < 0.25:
+                time.sleep(random.uniform(0.02, 0.05))
+            start = time.perf_counter()
+            angle_offset = 0.0
+            angle_inertia = 0
+            base_step = dist / steps
+            speed_multiplier = 1.0
+            overshoot_done = False
+            overshoot_enabled = random.random() < 0.25
+            for i in range(steps):
+                t = i / (steps - 1)
+                if overshoot_enabled and not overshoot_done and t > 0.88:
+                    overshoot_done = True
+                    ox = x + random.uniform(3, 8)
+                    oy = y + random.uniform(3, 8)
+                    for _ in range(4):
+                        dx = ox - cx
+                        dy = oy - cy
+                        d = math.hypot(dx, dy)
+                        if d < 0.5:
+                            break
+                        cx += dx / d * min(3, d)
+                        cy += dy / d * min(3, d)
+                        mouse.moveTo(int(cx), int(cy))
+                        time.sleep(0.003)
+                    for _ in range(5):
+                        dx = x - cx
+                        dy = y - cy
+                        d = math.hypot(dx, dy)
+                        if d < 0.5:
+                            break
+                        cx += dx / d * min(2, d)
+                        cy += dy / d * min(2, d)
+                        mouse.moveTo(int(cx), int(cy))
+                        time.sleep(0.004)
+                    mouse.moveTo(x, y)
+                    return
+                dx = x - cx
+                dy = y - cy
+                base_angle = math.atan2(dy, dx)
+                if angle_inertia > 0:
+                    angle_inertia -= 1
+                else:
+                    angle_offset += random.uniform(-0.05, 0.05) * roughness
+                    angle_offset = max(min(angle_offset, 0.12), -0.12)
+                if random.random() < 0.05 * roughness:
+                    angle_offset += random.uniform(-0.08, 0.08) * roughness
+                    angle_inertia = random.randint(3, 7)
+                    speed_multiplier *= random.uniform(1.07, 1.15)
+                if random.random() < 0.04:
+                    time.sleep(random.uniform(0.015, 0.04))
+                    angle_offset += random.uniform(-0.07, 0.07) * roughness
+                    angle_inertia = random.randint(2, 5)
+                    speed_multiplier *= random.uniform(0.85, 0.93)
+                speed_multiplier += (1.0 - speed_multiplier) * 0.1
+                final_angle = base_angle + angle_offset
+                step = base_step * speed_multiplier
+                cx += math.cos(final_angle) * step
+                cy += math.sin(final_angle) * step
+                if random.random() < 0.02 * roughness:
+                    cx += random.uniform(-1.2, 1.2)
+                    cy += random.uniform(-1.2, 1.2)
+                if t > 0.85:
+                    cx += random.uniform(-0.2, 0.2)
+                    cy += random.uniform(-0.2, 0.2)
+                mouse.moveTo(int(cx), int(cy))
+                elapsed = time.perf_counter() - start
+                remaining = speed - elapsed
+                left = steps - i - 1
+                if left > 0 and remaining > 0:
+                    time.sleep(remaining / left)
+            for _ in range(random.randint(5, 9)):
+                dx = x - cx
+                dy = y - cy
+                d = math.hypot(dx, dy)
+                if d < 0.4:
+                    break
+                step = min(1.8, d) * random.uniform(0.35, 0.55)
+                cx += (dx / d) * step
+                cy += (dy / d) * step
+                cx += random.uniform(-0.15, 0.15)
+                cy += random.uniform(-0.15, 0.15)
+                mouse.moveTo(int(cx), int(cy))
+                time.sleep(random.uniform(0.003, 0.007))
+        # CODE END
+
+
+    @staticmethod
+    def humanityMoveRel(dx, dy, duration=0.4, roughness=1.0):
+        """
+        Moves the cursor to a relative position using the same human‑like motion model
+        as humanityMoveTo, including angle shifts, inertia and final stabilization.
+
+        Args:
+            dx (int): Horizontal offset from the current cursor position.
+            dy (int): Vertical offset from the current cursor position.
+            duration (float): Total movement time in seconds.
+            roughness (float): Strength of human‑like irregularities.
+
+        Returns:
+            None
+        """
+        
+        # CODE START
+        start_x, start_y = mouse.position()
+        target_x = start_x + dx
+        target_y = start_y + dy
+        mouse.humanityMoveTo(target_x, target_y, duration=duration, roughness=roughness)
+        # CODE END
+
+
+    @staticmethod
+    def humanityDragTo(x, y, duration=0.4, roughness=1.0, button='left'):
+        """
+        Holds a mouse button and drags the cursor to an absolute position
+        using the humanityMoveTo motion model with angle shifts, inertia,
+        micro‑pauses and final stabilization.
+
+        Args:
+            x (int): Target X coordinate.
+            y (int): Target Y coordinate.
+            duration (float): Total drag time in seconds.
+            roughness (float): Strength of human‑like irregularities.
+            button (str): Mouse button to hold during the drag.
+
+        Returns:
+            None
+        """
+        
+        # CODE START
+        mouse.mouseDown(button=button)
+        mouse.humanityMoveTo(x=x,y=y,duration=duration,roughness=roughness)
+        mouse.mouseUp(button=button)
+        # CODE END
+
+
+    @staticmethod
+    def humanityDragRel(dx, dy, duration=0.4, roughness=1.0, button='left'):
+        """
+        Holds a mouse button and drags the cursor to a relative position
+        using the humanityMoveTo motion model with angle shifts, inertia,
+        micro‑pauses and final stabilization.
+
+        Args:
+            dx (int): Horizontal offset from the current cursor position.
+            dy (int): Vertical offset from the current cursor position.
+            duration (float): Total drag time in seconds.
+            roughness (float): Strength of human‑like irregularities.
+            button (str): Mouse button to hold during the drag.
+
+        Returns:
+            None
+        """
+        
+        # CODE START
+        start_x, start_y = mouse.position()
+        target_x = start_x + dx
+        target_y = start_y + dy
+        mouse.humanityDragTo(target_x, target_y, duration=duration, roughness=roughness, button=button)
+        # CODE END
+
+
+    @staticmethod
+    def getAngle(delay=0.01):
+        """
+        Returns cursor movement direction and speed.
+
+        Returns:
+            (angle, speed):
+                angle (float): direction in degrees
+                speed (float): pixels per sample
+        """
+        
+        # CODE START
+        p1 = mouse.position()
+        time.sleep(delay)
+        p2 = mouse.position()
+        dx = p2[0] - p1[0]
+        dy = p2[1] - p1[1]
+        angle = math.degrees(math.atan2(dy, dx))
+        speed = math.sqrt(dx*dx + dy*dy)
+        return angle, speed
+        # CODE END
+
+
+    @staticmethod
+    def addTrig(event_name, callback):
+        """
+        Adds a trigger callback for a specific mouse event.
+
+        Args:
+            event_name (_type_): _description_
+            callback (function): _description_
+            
+        Returns:
+            None
+        """
+        
+        # CODE START
+        global any_trigger
+        if event_name == "any":
+            any_trigger = callback
         else:
-            any_trigger(event_name, x, y, extra)
-    # CODE END
+            mouse_triggers[event_name] = callback
+        mouse._ensure_hook_running()
+        # CODE END
 
 
+    @staticmethod
+    def removeTrig(event_name):
+        """
+        Removes a previously added trigger callback for a mouse event.
 
-def wnd_mouse_proc(nCode, wParam, lParam):
-    """
+        Args:
+            event_name (_type_): _description_
+        
+        Returns:
+            None
+        """
+        
+        # CODE START
+        global any_trigger
+        if event_name == "any":
+            any_trigger = None
+        elif event_name in mouse_triggers:
+            del mouse_triggers[event_name]
+        mouse._stop_hook_if_needed()
+        # CODE END
 
-    Args:
-        nCode (_type_): _description_
-        wParam (_type_): _description_
-        lParam (_type_): _description_
 
-    Returns:
-        _type_: _description_
-    """
-    
-    # CODE START
-    if nCode < 0:
+    @staticmethod
+    def fire(event_name, type, x, y, extra=None):
+        """
+        Hires the appropriate trigger callback for a mouse event.
+
+        Args:
+            event_name (_type_): _description_
+            x (_type_): _description_
+            y (_type_): _description_
+            extra (_type_, optional): _description_. Defaults to None.
+        
+        Returns:
+            None
+        """
+        
+        # CODE START
+        if event_name in mouse_triggers:
+            if extra is None:
+                mouse_triggers[event_name], type, (x, y)
+            else:
+                mouse_triggers[event_name], type (x, y, extra)
+        if any_trigger:
+            if extra is None:
+                any_trigger(event_name, type, x, y)
+            else:
+                any_trigger(event_name, type, x, y, extra)
+        # CODE END
+
+
+    @staticmethod
+    def _wnd_proc(nCode, wParam, lParam):
+        """
+
+        Args:
+            nCode (_type_): _description_
+            wParam (_type_): _description_
+            lParam (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        
+        # CODE START
+        if nCode < 0:
+            return user32.CallNextHookEx(hHook, nCode, wParam, lParam)
+        data = ctypes.cast(lParam, LPMSLLHOOKSTRUCT).contents
+        x, y = data.pt.x, data.pt.y
+        if wParam == WM_LBUTTONDOWN:
+            mouse.fire("left", "down", x, y)
+        elif wParam == WM_LBUTTONUP:
+            mouse.fire("left", "up", x, y)
+        elif wParam == WM_RBUTTONDOWN:
+            mouse.fire("right", "down", x, y)
+        elif wParam == WM_RBUTTONUP:
+            mouse.fire("right", "up", x, y)
+        elif wParam == WM_MBUTTONDOWN:
+            mouse.fire("middle", "down", x, y)
+        elif wParam == WM_MBUTTONUP:
+            mouse.fire("middle", "up", x, y)
+        elif wParam == WM_XBUTTONDOWN:
+            btn = data.mouseData >> 16
+            mouse.fire("x1", "down" if btn == XBUTTON1 else "x2", "down", x, y)
+        elif wParam == WM_XBUTTONUP:
+            btn = data.mouseData >> 16
+            mouse.fire("x1", "up" if btn == XBUTTON1 else "x2", "up", x, y)
+        elif wParam == WM_MOUSEWHEEL:
+            delta = ctypes.c_short(data.mouseData >> 16).value
+            mouse.fire("scroll", "up" if delta > 0 else "down", x, y, delta)
+        elif wParam == WM_MOUSEHWHEEL:
+            delta = ctypes.c_short(data.mouseData >> 16).value
+            mouse.fire("scroll", "right" if delta > 0 else "scroll", "left", x, y, delta)
         return user32.CallNextHookEx(hHook, nCode, wParam, lParam)
-    data = ctypes.cast(lParam, LPMSLLHOOKSTRUCT).contents
-    x, y = data.pt.x, data.pt.y
-    if wParam == WM_LBUTTONDOWN:
-        fire("left_down", x, y)
-    elif wParam == WM_LBUTTONUP:
-        fire("left_up", x, y)
-    elif wParam == WM_RBUTTONDOWN:
-        fire("right_down", x, y)
-    elif wParam == WM_RBUTTONUP:
-        fire("right_up", x, y)
-    elif wParam == WM_MBUTTONDOWN:
-        fire("middle_down", x, y)
-    elif wParam == WM_MBUTTONUP:
-        fire("middle_up", x, y)
-    elif wParam == WM_XBUTTONDOWN:
-        btn = data.mouseData >> 16
-        fire("x1_down" if btn == XBUTTON1 else "x2_down", x, y)
-    elif wParam == WM_XBUTTONUP:
-        btn = data.mouseData >> 16
-        fire("x1_up" if btn == XBUTTON1 else "x2_up", x, y)
-    elif wParam == WM_MOUSEWHEEL:
-        delta = ctypes.c_short(data.mouseData >> 16).value
-        fire("scroll_up" if delta > 0 else "scroll_down", x, y, delta)
-    elif wParam == WM_MOUSEHWHEEL:
-        delta = ctypes.c_short(data.mouseData >> 16).value
-        fire("scroll_right" if delta > 0 else "scroll_left", x, y, delta)
-    return user32.CallNextHookEx(hHook, nCode, wParam, lParam)
-    # CODE END
+        # CODE END
 
 
-
-def _hook_loop():
-    """
-    Internal function that runs the mouse hook loop in a separate thread.
-    """
-    
-    # CODE START
-    global hHook, HOOKPROC, hook_running
-    HOOKPROC = LowLevelMouseProc(wnd_mouse_proc)
-    hHook = user32.SetWindowsHookExW(WH_MOUSE_LL,HOOKPROC,0,0)
-    if not hHook:
-        hook_running = False
-        return
-    msg = wintypes.MSG()
-    while hook_running and user32.GetMessageW(ctypes.byref(msg), 0, 0, 0):
-        user32.TranslateMessage(ctypes.byref(msg))
-        user32.DispatchMessageW(ctypes.byref(msg))
-    if hHook:
-        user32.UnhookWindowsHookEx(hHook)
-        hHook = None
-    # CODE END
-
-
-
-def _ensure_hook_running():
-    """
-    ensures that the mouse hook is running if there are any triggers registered.
-    
-    Returns:
-        None
-    """
-    
-    # CODE START
-    global hook_thread, hook_running
-    if hook_running:
-        return
-    if not mouse_triggers and not any_trigger:
-        return
-    hook_running = True
-    hook_thread = threading.Thread(target=_hook_loop, daemon=True)
-    hook_thread.start()
-    # CODE END
+    @staticmethod
+    def _hook_loop():
+        """
+        Internal function that runs the mouse hook loop in a separate thread.
+        """
+        
+        # CODE START
+        global hHook, HOOKPROC, hook_running
+        HOOKPROC = LowLevelMouseProc(mouse.wnd_mouse_proc)
+        hHook = user32.SetWindowsHookExW(WH_MOUSE_LL,HOOKPROC,0,0)
+        if not hHook:
+            hook_running = False
+            return
+        msg = wintypes.MSG()
+        while hook_running and user32.GetMessageW(ctypes.byref(msg), 0, 0, 0):
+            user32.TranslateMessage(ctypes.byref(msg))
+            user32.DispatchMessageW(ctypes.byref(msg))
+        if hHook:
+            user32.UnhookWindowsHookEx(hHook)
+            hHook = None
+        # CODE END
 
 
+    @staticmethod
+    def _ensure_hook_running():
+        """
+        ensures that the mouse hook is running if there are any triggers registered.
+        
+        Returns:
+            None
+        """
+        
+        # CODE START
+        global hook_thread, hook_running
+        if hook_running:
+            return
+        if not mouse_triggers and not any_trigger:
+            return
+        hook_running = True
+        hook_thread = threading.Thread(target=mouse._hook_loop, daemon=True)
+        hook_thread.start()
+        # CODE END
 
-def _stop_hook_if_needed():
-    """
-    Stops the mouse hook if there are no triggers registered.
-    """
-    
-    # CODE START
-    global hook_running
-    if mouse_triggers or any_trigger:
-        return
-    if hook_running:
-        hook_running = False
-        user32.PostThreadMessageW(hook_thread.ident, 0x0012, 0, 0)
-    # CODE END
+
+    @staticmethod
+    def _stop_hook_if_needed():
+        """
+        Stops the mouse hook if there are no triggers registered.
+        """
+        
+        # CODE START
+        global hook_running
+        if mouse_triggers or any_trigger:
+            return
+        if hook_running:
+            hook_running = False
+            user32.PostThreadMessageW(hook_thread.ident, 0x0012, 0, 0)
+        # CODE END
 
 # FUNCTIONS END
 
@@ -813,7 +839,23 @@ special_keys = {
     "f21": 0x84,
     "f22": 0x85,
     "f23": 0x86,
-    "f24": 0x87
+    "f24": 0x87,
+    "num0": 0x60,
+    "num1": 0x61,
+    "num2": 0x62,
+    "num3": 0x63,
+    "num4": 0x64,
+    "num5": 0x65,
+    "num6": 0x66,
+    "num7": 0x67,
+    "num8": 0x68,
+    "num9": 0x69,
+    "num*": 0x6A,
+    "num+": 0x6B, 
+    "num-": 0x6D,
+    "num.": 0x6E,
+    "num/": 0x6F,
+    "num_enter": 0x0D
 }
 # WinAPI CONSTANTS END
 
@@ -823,6 +865,12 @@ HICON = wintypes.HANDLE
 HBRUSH = wintypes.HANDLE
 HINSTANCE = wintypes.HANDLE
 
+user32.OpenClipboard.argtypes = [wintypes.HWND]
+user32.GetClipboardData.restype = wintypes.HANDLE
+user32.GetClipboardData.argtypes = [wintypes.UINT]
+kernel32.GlobalLock.restype = wintypes.LPVOID
+kernel32.GlobalLock.argtypes = [wintypes.HGLOBAL]
+kernel32.GlobalUnlock.argtypes = [wintypes.HGLOBAL]
 
 
 class KEYBDINPUT(ctypes.Structure):
@@ -899,434 +947,467 @@ hwnd=None
 started=False
 # STRUCTURES END
 
-# FUNCTIONS START
-def keyToVK(key:str)->int:
-    """
-    Converts a key name into a virtual-key (VK) code.
-
-    Args:
-        key (str): Key name. Supports:
-            - special keys from `special_keys`
-            - single characters (letters, digits, symbols)
-
-    Returns:
-        int: Virtual-key code.
-
-    Raises:
-        TypeError: If the key is unknown.
-    """
+class keyboard:
     
-    # CODE START
-    key=key.lower()
-    if key in special_keys:
-        return special_keys[key]
-    if len(key)==1:
-        return ord(key.upper())
-    raise TypeError("Unknown key")
-    # CODE END
-
-
-
-def keyDown(key, type='vk'):
-    """
-    Sends a key-down event.
-
-    Args:
-        key (str): Key to press.
-        type (str): Input mode:
-            'vk'      – virtual-key code
-            'unicode' – direct Unicode input
-            'scan'    – hardware scancode
-
-    Returns:
-        None
-    """
+    # FUNCTIONS START
     
-    # CODE START
-    event = INPUT()
-    event.type = 1
-    if type == 'vk':
-        vk = keyToVK(key)
-        event.ki = KEYBDINPUT(vk, 0, 0, 0, None)
-    elif type == 'unicode':
-        code = ord(key)
-        event.ki = KEYBDINPUT(0, code, KEYEVENTF_UNICODE, 0, None)
-    elif type == 'scan':
-        vk = keyToVK(key)
-        scan = user32.MapVirtualKeyW(vk, 0)
-        event.ki = KEYBDINPUT(0, scan, KEYEVENTF_SCANCODE, 0, None)
-    else:
-        raise TypeError("type must be 'vk', 'unicode' or 'scan'")
-    user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(INPUT))
-    # CODE END
+    @staticmethod
+    def keyToVK(key:str)->int:
+        """
+        Converts a key name into a virtual-key (VK) code.
 
+        Args:
+            key (str): Key name. Supports:
+                - special keys from `special_keys`
+                - single characters (letters, digits, symbols)
 
+        Returns:
+            int: Virtual-key code.
 
-def keyUp(key, type='vk'):
-    """
-    Sends a key-up event.
-
-    Args:
-        key (str): Key to release.
-        type (str): Input mode:
-            'vk', 'unicode', or 'scan'.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    event = INPUT()
-    event.type = 1
-    if type == 'vk':
-        vk = keyToVK(key)
-        event.ki = KEYBDINPUT(vk, 0, KEYEVENTF_KEYUP, 0, None)
-    elif type == 'unicode':
-        code = ord(key)
-        event.ki = KEYBDINPUT(0, code, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP, 0, None)
-    elif type == 'scan':
-        vk = keyToVK(key)
-        scan = user32.MapVirtualKeyW(vk, 0)
-        event.ki = KEYBDINPUT(0, scan, KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, 0, None)
-    else:
-        raise TypeError("type must be 'vk', 'unicode' or 'scan'")
-    user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(INPUT))
-    # CODE END
-
-
-
-def press(key, presses=1, interval=0, type='vk'):
-    """
-    Presses and releases a key one or multiple times.
-
-    Args:
-        key (str): Key to press.
-        presses (int): Number of repetitions.
-        interval (float): Delay between presses.
-        type (str): Input mode ('vk', 'unicode', 'scan').
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    for _ in range(presses):
-        keyDown(key, type=type)
-        time.sleep(interval)
-        keyUp(key, type=type)
-        time.sleep(interval)
-    # CODE END
-
-
-
-def write(text, interval=0, type='unicode'):
-    """
-    Types a string character-by-character.
-
-    Args:
-        text (str): Text to type.
-        interval (float): Delay between characters.
-        type (str): Input mode ('unicode' recommended).
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    for char in text:
-        press(char, interval=interval, type=type)
-    # CODE END
-
-
-
-def doHotkey(*keys, interval=0):
-    """
-    Presses a key combination (e.g., ctrl+shift+esc).
-
-    Args:
-        *keys (str): Keys to press in order.
-        interval (float): Delay between presses.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    for key in keys:
-        keyDown(key)
-        time.sleep(interval)
-    for key in reversed(keys):
-        keyUp(key)
-        time.sleep(interval)
-    # CODE END
-
-
-
-def addHotkey(key, callback):
-    """
-    Registers a single-key hotkey using RAWINPUT.
-
-    Args:
-        key (str): Single key (one character).
-        callback (callable): Function to call on key press.
-
-    Returns:
-        None
-    Raises:
-        TypeError: If key is not a single character.
-    """
-    
-    # CODE START
-    global started
-    if key.lower() == 'any':
-        vk = 'ANY_KEY_MARKER'
-    else:
-        key = key.lower()
+        Raises:
+            TypeError: If the key is unknown.
+        """
+        
+        # CODE START
+        key=key.lower()
         if key in special_keys:
-            vk = special_keys[key]
-        elif len(key) == 1:
-            vk = ord(key.upper())
+            return special_keys[key]
+        if len(key)==1:
+            return ord(key.upper())
+        raise TypeError("Unknown key")
+        # CODE END
+
+
+    @staticmethod
+    def keyDown(key, type='vk'):
+        """
+        Sends a key-down event.
+
+        Args:
+            key (str): Key to press.
+            type (str): Input mode:
+                'vk'      – virtual-key code
+                'unicode' – direct Unicode input
+                'scan'    – hardware scancode
+
+        Returns:
+            None
+        """
+        
+        # CODE START
+        event = INPUT()
+        event.type = 1
+        if type == 'vk':
+            vk = keyboard.keyToVK(key)
+            event.ki = KEYBDINPUT(vk, 0, 0, 0, None)
+        elif type == 'unicode':
+            code = ord(key)
+            event.ki = KEYBDINPUT(0, code, KEYEVENTF_UNICODE, 0, None)
+        elif type == 'scan':
+            vk = keyboard.keyToVK(key)
+            scan = user32.MapVirtualKeyW(vk, 0)
+            event.ki = KEYBDINPUT(0, scan, KEYEVENTF_SCANCODE, 0, None)
         else:
-            raise TypeError(f"Unknown key: {key}")
-    callbacks.append((vk, callback))
-    if not started:
-        started = True
-        threading.Thread(target=_raw_loop, daemon=True).start()
+            raise TypeError("type must be 'vk', 'unicode' or 'scan'")
+        user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(INPUT))
+        # CODE END
+
+
+    @staticmethod
+    def keyUp(key, type='vk'):
+        """
+        Sends a key-up event.
+
+        Args:
+            key (str): Key to release.
+            type (str): Input mode:
+                'vk', 'unicode', or 'scan'.
+
+        Returns:
+            None
+        """
+        
+        # CODE START
+        event = INPUT()
+        event.type = 1
+        if type == 'vk':
+            vk = keyboard.keyToVK(key)
+            event.ki = KEYBDINPUT(vk, 0, KEYEVENTF_KEYUP, 0, None)
+        elif type == 'unicode':
+            code = ord(key)
+            event.ki = KEYBDINPUT(0, code, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP, 0, None)
+        elif type == 'scan':
+            vk = keyboard.keyToVK(key)
+            scan = user32.MapVirtualKeyW(vk, 0)
+            event.ki = KEYBDINPUT(0, scan, KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, 0, None)
+        else:
+            raise TypeError("type must be 'vk', 'unicode' or 'scan'")
+        user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(INPUT))
+        # CODE END
+
+
+    @staticmethod
+    def press(key, presses=1, interval=0, type='vk'):
+        """
+        Presses and releases a key one or multiple times.
+
+        Args:
+            key (str): Key to press.
+            presses (int): Number of repetitions.
+            interval (float): Delay between presses.
+            type (str): Input mode ('vk', 'unicode', 'scan').
+
+        Returns:
+            None
+        """
+        
+        # CODE START
+        for _ in range(presses):
+            keyboard.keyDown(key, type=type)
+            time.sleep(interval)
+            keyboard.keyUp(key, type=type)
+            time.sleep(interval)
+        # CODE END
+
+
+    @staticmethod
+    def write(text, interval=0, type='unicode'):
+        """
+        Types a string character-by-character.
+
+        Args:
+            text (str): Text to type.
+            interval (float): Delay between characters.
+            type (str): Input mode ('unicode' recommended).
+
+        Returns:
+            None
+        """
+        
+        # CODE START
+        for char in text:
+            keyboard.press(char, interval=interval, type=type)
+        # CODE END
+
+
+    @staticmethod
+    def doHotkey(*keys, interval=0):
+        """
+        Presses a key combination (e.g., ctrl+shift+esc).
+
+        Args:
+            *keys (str): Keys to press in order.
+            interval (float): Delay between presses.
+
+        Returns:
+            None
+        """
+        
+        # CODE START
+        for key in keys:
+            keyboard.keyDown(key)
+            time.sleep(interval)
+        for key in reversed(keys):
+            keyboard.keyUp(key)
+            time.sleep(interval)
+        # CODE END
+
+
+    @staticmethod
+    def addHotkey(key, callback):
+        """
+        Registers a single-key hotkey using RAWINPUT.
+
+        Args:
+            key (str): Single key (one character).
+            callback (callable): Function to call on key press.
+
+        Returns:
+            None
+        Raises:
+            TypeError: If key is not a single character.
+        """
+        
+        # CODE START
+        global started
+        if key.lower() == 'any':
+            vk = 'ANY_KEY_MARKER'
+        else:
+            key = key.lower()
+            if key in special_keys:
+                vk = special_keys[key]
+            elif len(key) == 1:
+                vk = ord(key.upper())
+            else:
+                raise TypeError(f"Unknown key: {key}")
+        callbacks.append((vk, callback))
+        if not started:
+            started = True
+            threading.Thread(target=keyboard._raw_loop, daemon=True).start()
 
 
 
+    @staticmethod
+    def addHotkey(key, callback):
+        """
+        Registers a single-key hotkey using RAWINPUT.
 
-def addCombo(keys, callback):
-    """
-    Registers a multi-key combination hotkey.
+        Args:
+            key (str): Single key (one character).
+            callback (callable): Function to call on key press.
 
-    Args:
-        keys (list[str] | tuple[str]): Keys forming the combo.
-        callback (callable): Function to call when all keys are held.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    global started
-    vk_tuple = tuple(keyToVK(k) for k in keys)
-    callbacks.append((vk_tuple, callback))
-    if not started:
-        started = True
-        threading.Thread(target=_raw_loop, daemon=True).start()
-    # CODE END
-
-
-
-def removeHotkey(key, callback):
-    """
-    Removes a previously registered single-key hotkey.
-
-    Args:
-        key (str): Key to remove.
-        callback (callable): Callback associated with this hotkey.
-
-    Returns:
-        bool: True if removed, False if not found.
-    """
-    
-    # CODE START
-    vk = keyToVK(key)
-    for i,(code,cb) in enumerate(list(callbacks)):
-        if code == vk and cb is callback:
-            callbacks.pop(i)
-            key_state[vk] = False
-            return True
-    return False
-    # CODE END
+        Returns:
+            None
+        Raises:
+            TypeError: If key is not a single character.
+        """
+        
+        # CODE START
+        global started
+        key = key.lower()
+        if key == 'any':
+            vk = 'ANY_KEY_MARKER'
+        elif key.endswith('_up') or key.endswith('_down'):
+            vk = key
+        else:
+            if key in special_keys:
+                vk = special_keys[key]
+            elif len(key) == 1:
+                vk = ord(key.upper())
+            else:
+                raise TypeError(f"Unknown key: {key}")
+        callbacks.append((vk, callback))
+        if not started:
+            started = True
+            threading.Thread(target=keyboard._raw_loop, daemon=True).start()
 
 
 
-def removeCombo(keys, callback):
-    """
-    Removes a previously registered key-combination hotkey.
+    @staticmethod
+    def removeHotkey(key, callback):
+        """
+        Removes a previously registered single-key hotkey.
+        Supports normal keys and ANY_KEY_MARKER.
+        """
 
-    Args:
-        keys (list[str] | tuple[str]): Combination to remove.
-        callback (callable): Callback associated with this combo.
-
-    Returns:
-        bool: True if removed, False if not found.
-    """
-    
-    # CODE START
-    vk_tuple = tuple(keyToVK(k) for k in keys)
-    for i,(code,cb) in enumerate(list(callbacks)):
-        if code == vk_tuple and cb is callback:
-            callbacks.pop(i)
-            for v in vk_tuple:
-                key_state[v] = False
-            return True
-    return False
-    # CODE END
-
-
-
-def copyToClipBoard(text: str) -> bool:
-    """
-    Copies a string to the Windows clipboard using Unicode format.
-
-    Args:
-        text (str): The string content to be copied.
-
-    Returns:
-        bool: True if successful, False otherwise.
-    """
-    
-    # CODE START
-    if not user32.OpenClipboard(None):
-        return False
-    try:
-        user32.EmptyClipboard()
-        raw = text.encode('utf-16-le')
-        size = len(raw) + 2
-        h_mem = kernel32.GlobalAlloc(GMEM_MOVEABLE, size)
-        if h_mem:
-            ptr = kernel32.GlobalLock(h_mem)
-            if ptr:
-                ctypes.memmove(ptr, raw, len(raw))
-                ctypes.memset(ptr + len(raw), 0, 2)
-                kernel32.GlobalUnlock(h_mem)
-                if user32.SetClipboardData(CF_UNICODETEXT, h_mem):
+        # CODE START
+        if key == "any":
+            for i, (code, cb) in enumerate(list(callbacks)):
+                if code == "ANY_KEY_MARKER" and cb is callback:
+                    callbacks.pop(i)
                     return True
-            kernel32.GlobalFree(h_mem)
-    finally:
-        user32.CloseClipboard()
-    return False
-    # CODE END
-
-
-
-def getFromClipBoard():
-    """
-    Retrieves the current text content from the clipboard.
-
-    Returns:
-        Optional[str]: The clipboard text if available, None otherwise.
-    """
-    
-    # CODE START
-    if not user32.OpenClipboard(None):
-        return None
-    
-    try:
-        if user32.IsClipboardFormatAvailable(CF_UNICODETEXT):
-            h_mem = user32.GetClipboardData(CF_UNICODETEXT)
-            if h_mem:
-                ptr = kernel32.GlobalLock(h_mem)
-                text = ctypes.c_wchar_p(ptr).value
-                kernel32.GlobalUnlock(h_mem)
-                return text
-    finally:
-        user32.CloseClipboard()
-    return None
-    # CODE END
-
-
-
-def eraseClipBoard() -> bool:
-    """
-    Clears all data from the Windows clipboard.
-
-    Returns:
-        bool: True if successful, False otherwise.
-    """
-    
-    # CODE START
-    if not user32.OpenClipboard(None):
+            return False
+        vk = keyboard.keyToVK(key)
+        for i, (code, cb) in enumerate(list(callbacks)):
+            if code == vk and cb is callback:
+                callbacks.pop(i)
+                key_state[vk] = False
+                return True
         return False
-    try:
-        return bool(user32.EmptyClipboard())
-    finally:
-        user32.CloseClipboard()
-    # CODE END
+        # CODE END
 
 
 
-def _wnd_proc(hWnd,msg,wParam,lParam):
-    """
-    Internal RAWINPUT window procedure.
+    @staticmethod
+    def removeCombo(keys, callback):
+        """
+        Removes a previously registered key-combination hotkey.
 
-    Handles:
-        - WM_INPUT events
-        - Key state tracking
-        - Hotkey and combo detection
+        Args:
+            keys (list[str] | tuple[str]): Combination to remove.
+            callback (callable): Callback associated with this combo.
 
-    Args:
-        hWnd: Window handle.
-        msg: Message ID.
-        wParam: WPARAM.
-        lParam: LPARAM.
+        Returns:
+            bool: True if removed, False if not found.
+        """
+        
+        # CODE START
+        vk_tuple = tuple(keyboard.keyToVK(k) for k in keys)
+        for i,(code,cb) in enumerate(list(callbacks)):
+            if code == vk_tuple and cb is callback:
+                callbacks.pop(i)
+                for v in vk_tuple:
+                    key_state[v] = False
+                return True
+        return False
+        # CODE END
 
-    Returns:
-        LRESULT: Result of DefWindowProcW.
-    """
-    
-    # CODE START
-    if msg==WM_INPUT:
-        size=wintypes.UINT()
-        user32.GetRawInputData(lParam,RID_INPUT,None,ctypes.byref(size),ctypes.sizeof(RAWINPUTHEADER))
-        buf=ctypes.create_string_buffer(size.value)
-        user32.GetRawInputData(lParam,RID_INPUT,buf,ctypes.byref(size),ctypes.sizeof(RAWINPUTHEADER))
-        raw=ctypes.cast(buf,ctypes.POINTER(RAWINPUT)).contents
-        vk = raw.keyboard.VKey
-        m  = raw.keyboard.Message
-        if m == 0x0100:
-            key_state[vk] = True
-        elif m == 0x0101:
-            key_state[vk] = False
-        vk_to_name = {v: k for k, v in special_keys.items()}
-        for code, cb in callbacks:
-            if m == 0x0100 and (code == vk or code == 'ANY_KEY_MARKER'):
+
+    @staticmethod
+    def copyToClipBoard(text: str) -> bool:
+        """
+        Copies a string to the Windows clipboard using Unicode format.
+
+        Args:
+            text (str): The string content to be copied.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        
+        # CODE START
+        if not user32.OpenClipboard(None):
+            return False
+        try:
+            user32.EmptyClipboard()
+            size = (len(text) + 1) * ctypes.sizeof(ctypes.c_wchar)
+            h_cd = kernel32.GlobalAlloc(GMEM_MOVEABLE, size)
+            if not h_cd:
+                return False
+            ptr = kernel32.GlobalLock(h_cd)
+            if not ptr:
+                return False
+            try:
+                ctypes.memmove(ptr, text, size)
+            finally:
+                kernel32.GlobalUnlock(h_cd)
+            user32.SetClipboardData(CF_UNICODETEXT, h_cd)
+        finally:
+            user32.CloseClipboard()
+        return True
+        # CODE END
+
+
+    @staticmethod
+    def getFromClipBoard():
+        """
+        Retrieves the current text content from the clipboard.
+
+        Returns:
+            Optional[str]: The clipboard text if available, None otherwise.
+        """
+        
+        # CODE START
+        if not user32.OpenClipboard(None):
+            return None
+        try:
+            h_cd = user32.GetClipboardData(CF_UNICODETEXT)
+            if not h_cd:
+                return None
+            ptr = kernel32.GlobalLock(h_cd)
+            if not ptr:
+                return None
+            try:
+                text = ctypes.c_wchar_p(ptr).value
+            finally:
+                kernel32.GlobalUnlock(h_cd)
+            return text
+        finally:
+            user32.CloseClipboard()
+        # CODE END
+
+
+    @staticmethod
+    def eraseClipBoard() -> bool:
+        """
+        Clears all data from the Windows clipboard.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        
+        # CODE START
+        if user32.OpenClipboard(None):
+            try:
+                user32.EmptyClipboard()
+                return True
+            finally:
+                user32.CloseClipboard()
+        return False
+        # CODE END
+
+
+    @staticmethod
+    def _wnd_proc(hWnd, msg, wParam, lParam):
+        """
+        Internal RAWINPUT window procedure.
+
+        Handles:
+            - WM_INPUT events
+            - Key state tracking
+            - Hotkey and combo detection
+
+        Args:
+            hWnd: Window handle.
+            msg: Message ID.
+            wParam: WPARAM.
+            lParam: LPARAM.
+
+        Returns:
+            LRESULT: Result of DefWindowProcW.
+        """
+        
+        # CODE START
+        if msg == WM_INPUT:
+            size = wintypes.UINT()
+            user32.GetRawInputData(lParam, RID_INPUT, None, ctypes.byref(size), ctypes.sizeof(RAWINPUTHEADER))
+            buf = ctypes.create_string_buffer(size.value)
+            user32.GetRawInputData(lParam, RID_INPUT, buf, ctypes.byref(size), ctypes.sizeof(RAWINPUTHEADER))
+            raw = ctypes.cast(buf, ctypes.POINTER(RAWINPUT)).contents
+            vk = raw.keyboard.VKey
+            m  = raw.keyboard.Message
+            if vk == 255 or vk == 0:
+                return user32.DefWindowProcW(hWnd, msg, wParam, ctypes.c_void_p(lParam))
+            action = ""
+            if m == 0x0100 or m == 0x0104:
+                key_state[vk] = True
+                action = "down"
+            elif m == 0x0101 or m == 0x0105:
+                key_state[vk] = False
+                action = "up"
+            if action:
+                vk_to_name = {v: k for k, v in special_keys.items()}
                 char = vk_to_name.get(vk)
                 if not char:
-                    try:
-                        char = chr(vk).lower()
-                    except:
-                        char = f"VK_{vk}"
-                cb(char)
-    return user32.DefWindowProcW(hWnd,msg,wParam,ctypes.c_void_p(lParam))
-    # CODE END
+                    if (0x30 <= vk <= 0x5A) or (0x60 <= vk <= 0x6F) or (vk == 0x20):
+                        try:
+                            char = chr(vk).lower()
+                        except:
+                            char = f"vk{vk}"
+                    else:
+                        char = f"vk{vk}"
+                full_event = f"{char}{action}"
+                for code, cb in callbacks:
+                    if code == full_event or code == 'ANY_KEY_MARKER' or (code == vk and action == "down"):
+                        try:
+                            cb(char, action)
+                        except TypeError:
+                            cb(char)
+        return user32.DefWindowProcW(hWnd, msg, wParam, ctypes.c_void_p(lParam))
 
 
+    @staticmethod
+    def _raw_loop():
+        """
+        Internal message loop for RAWINPUT hotkey processing.
 
-def _raw_loop():
-    """
-    Internal message loop for RAWINPUT hotkey processing.
+        Creates:
+            - Hidden window
+            - RAWINPUT device registration
+            - Infinite GetMessageW loop
 
-    Creates:
-        - Hidden window
-        - RAWINPUT device registration
-        - Infinite GetMessageW loop
+        Runs in a background thread.
 
-    Runs in a background thread.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    global hwnd
-    WNDPROC=ctypes.WINFUNCTYPE(ctypes.c_long,wintypes.HWND,wintypes.UINT,wintypes.WPARAM,wintypes.LPARAM)
-    proc=WNDPROC(_wnd_proc)
-    wc=WNDCLASS()
-    wc.lpfnWndProc=proc
-    wc.lpszClassName="RawInputHiddenWindow"
-    user32.RegisterClassW(ctypes.byref(wc))
-    hwnd=user32.CreateWindowExW(0,wc.lpszClassName,"raw",0,0,0,0,0,None,None,None,None)
-    rid=RAWINPUTDEVICE(1,6,RIDEV_INPUTSINK,hwnd)
-    user32.RegisterRawInputDevices(ctypes.byref(rid),1,ctypes.sizeof(RAWINPUTDEVICE))
-    msg=wintypes.MSG()
-    while user32.GetMessageW(ctypes.byref(msg),None,0,0)!=0:
-        user32.TranslateMessage(ctypes.byref(msg))
-        user32.DispatchMessageW(ctypes.byref(msg))
-    # CODE END
+        Returns:
+            None
+        """
+        
+        # CODE START
+        global hwnd
+        WNDPROC=ctypes.WINFUNCTYPE(ctypes.c_long,wintypes.HWND,wintypes.UINT,wintypes.WPARAM,wintypes.LPARAM)
+        proc=WNDPROC(keyboard._wnd_proc)
+        wc=WNDCLASS()
+        wc.lpfnWndProc=proc
+        wc.lpszClassName="RawInputHiddenWindow"
+        user32.RegisterClassW(ctypes.byref(wc))
+        hwnd=user32.CreateWindowExW(0,wc.lpszClassName,"raw",0,0,0,0,0,None,None,None,None)
+        rid=RAWINPUTDEVICE(1,6,RIDEV_INPUTSINK,hwnd)
+        user32.RegisterRawInputDevices(ctypes.byref(rid),1,ctypes.sizeof(RAWINPUTDEVICE))
+        msg=wintypes.MSG()
+        while user32.GetMessageW(ctypes.byref(msg),None,0,0)!=0:
+            user32.TranslateMessage(ctypes.byref(msg))
+            user32.DispatchMessageW(ctypes.byref(msg))
+        # CODE END
 
 # FUNCTIONS END
 
@@ -1382,503 +1463,504 @@ class BITMAPINFO(ctypes.Structure):
     ]
 # STRUCTURES END
 
-# FUNCTIONS START
-def size():
-    """
-    Returns the current screen resolution.
+class screen:
 
-    Returns:
-        tuple[int, int]: (width, height) of the primary display.
-    """
-    
-    # CODE START
-    return user32.GetSystemMetrics(0),user32.GetSystemMetrics(1)
-    # CODE END
+    # FUNCTIONS START
 
+    @staticmethod
+    def size():
+        """
+        Returns the current screen resolution.
 
-
-def onScreen(x,y):
-    """
-    Checks whether a coordinate is inside the screen bounds.
-
-    Args:
-        x (int): X coordinate.
-        y (int): Y coordinate.
-
-    Returns:
-        bool: True if (x, y) is within the screen.
-    """
-    
-    # CODE START
-    sw,sh=size()
-    return 0<=x<sw and 0<=y<sh
-    # CODE END
+        Returns:
+            tuple[int, int]: (width, height) of the primary display.
+        """
+        
+        # CODE START
+        return user32.GetSystemMetrics(0),user32.GetSystemMetrics(1)
+        # CODE END
 
 
+    @staticmethod
+    def onScreen(x,y):
+        """
+        Checks whether a coordinate is inside the screen bounds.
 
-def pixel(x,y):
-    """
-    Reads the RGB color of a screen pixel.
+        Args:
+            x (int): X coordinate.
+            y (int): Y coordinate.
 
-    Args:
-        x (int): X coordinate.
-        y (int): Y coordinate.
-
-    Returns:
-        tuple[int, int, int]: (R, G, B) color.
-    """
-    
-    # CODE START
-    hdc=user32.GetDC(0)
-    c=gdi32.GetPixel(hdc,x,y)
-    user32.ReleaseDC(0,hdc)
-    r=c&0xFF
-    g=(c>>8)&0xFF
-    b=(c>>16)&0xFF
-    return r,g,b
-    # CODE END
+        Returns:
+            bool: True if (x, y) is within the screen.
+        """
+        
+        # CODE START
+        sw,sh=screen.size()
+        return 0<=x<sw and 0<=y<sh
+        # CODE END
 
 
+    @staticmethod
+    def pixel(x,y):
+        """
+        Reads the RGB color of a screen pixel.
 
-def pixelMatchesColor(x,y,expected_color,tolerance=0):
-    """
-    Compares a pixel color with tolerance.
+        Args:
+            x (int): X coordinate.
+            y (int): Y coordinate.
 
-    Args:
-        x (int): X coordinate.
-        y (int): Y coordinate.
-        expected_color (tuple[int, int, int]): (R, G, B).
-        tolerance (int): Allowed deviation per channel.
-
-    Returns:
-        bool: True if colors match within tolerance.
-    """
-    
-    # CODE START
-    r,g,b=pixel(x,y)
-    er,eg,eb=expected_color
-    return abs(r-er)<=tolerance and abs(g-eg)<=tolerance and abs(b-eb)<=tolerance
-    # CODE END
-
-
-
-def _getScreenRAW(region=None):
-    """
-    Captures a raw BGRA screenshot.
-
-    Args:
-        region (tuple[int, int, int, int] | None):
-            (x, y, width, height). If None, captures full screen.
-
-    Returns:
-        tuple[int, int, bytes]: (width, height, raw BGRA buffer)
-    """
-    
-    # CODE START
-    if region:
-        x, y, w, h = region
-    else:
-        x, y = 0, 0
-        w = user32.GetSystemMetrics(0)
-        h = user32.GetSystemMetrics(1)
-    hdc_screen = user32.GetDC(0)
-    hdc_mem = gdi32.CreateCompatibleDC(hdc_screen)
-    hbmp = gdi32.CreateCompatibleBitmap(hdc_screen, w, h)
-    gdi32.SelectObject(hdc_mem, hbmp)
-    gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, x, y, 0x00CC0020)
-    total_bytes = w * h * 4
-    buffer = (ctypes.c_ubyte * total_bytes)()
-    gdi32.GetBitmapBits(hbmp, total_bytes, buffer)
-    gdi32.DeleteObject(hbmp)
-    gdi32.DeleteDC(hdc_mem)
-    user32.ReleaseDC(0, hdc_screen)
-    return w, h, buffer
-    # CODE END
+        Returns:
+            tuple[int, int, int]: (R, G, B) color.
+        """
+        
+        # CODE START
+        hdc=user32.GetDC(0)
+        c=gdi32.GetPixel(hdc,x,y)
+        user32.ReleaseDC(0,hdc)
+        r=c&0xFF
+        g=(c>>8)&0xFF
+        b=(c>>16)&0xFF
+        return r,g,b
+        # CODE END
 
 
+    @staticmethod
+    def pixelMatchesColor(x,y,expected_color,tolerance=0):
+        """
+        Compares a pixel color with tolerance.
 
-def _png_chunk(t,d):
-    """
-    Builds a PNG chunk.
+        Args:
+            x (int): X coordinate.
+            y (int): Y coordinate.
+            expected_color (tuple[int, int, int]): (R, G, B).
+            tolerance (int): Allowed deviation per channel.
 
-    Args:
-        t (bytes): Chunk type (e.g., b'IHDR').
-        d (bytes): Chunk data.
-
-    Returns:
-        bytes: Complete PNG chunk with CRC.
-    """
-    
-    # CODE START
-    return struct.pack("!I",len(d))+t+d+struct.pack("!I",zlib.crc32(t+d)&0xffffffff)
-    # CODE END
-
-
-
-def _encodePngBGRA(w,h,data):
-    """
-    Encodes raw BGRA pixel data into a PNG image.
-
-    Args:
-        w (int): Width.
-        h (int): Height.
-        data (bytes): Raw BGRA buffer.
-
-    Returns:
-        bytes: PNG-encoded image.
-    """
-    
-    # CODE START
-    fixed=bytearray(len(data))
-    for i in range(0,len(data),4):
-        b=data[i]
-        g=data[i+1]
-        r=data[i+2]
-        a=data[i+3]
-        fixed[i]=r
-        fixed[i+1]=g
-        fixed[i+2]=b
-        fixed[i+3]=a
-    sig=b"\x89PNG\r\n\x1a\n"
-    ihdr=struct.pack("!IIBBBBB",w,h,8,6,0,0,0)
-    out=sig+_png_chunk(b"IHDR",ihdr)
-    stride=w*4
-    raw=b""
-    for y in range(h):
-        row=fixed[y*stride:(y+1)*stride]
-        raw+=b"\x00"+row
-    comp=zlib.compress(raw,9)
-    out+=_png_chunk(b"IDAT",comp)
-    out+=_png_chunk(b"IEND",b"")
-    return out
-    # CODE END
+        Returns:
+            bool: True if colors match within tolerance.
+        """
+        
+        # CODE START
+        r,g,b=screen.pixel(x,y)
+        er,eg,eb=expected_color
+        return abs(r-er)<=tolerance and abs(g-eg)<=tolerance and abs(b-eb)<=tolerance
+        # CODE END
 
 
+    @staticmethod
+    def _getScreenRAW(region=None):
+        """
+        Captures a raw BGRA screenshot.
 
-def screenshot(region=None):
-    """
-    Captures a screenshot and returns PNG bytes.
+        Args:
+            region (tuple[int, int, int, int] | None):
+                (x, y, width, height). If None, captures full screen.
 
-    Args:
-        region (tuple[int, int, int, int] | None):
-            (x, y, width, height). If None, captures full screen.
-
-    Returns:
-        bytes | None: PNG image data or None on failure.
-    """
-    
-    # CODE START
-    r=_getScreenRAW(region)
-    if r is None:
-        return None
-    w,h,buf=r
-    return _encodePngBGRA(w,h,buf)
-    # CODE END
-
-
-
-def screenshotToFile(path,region=None):
-    """
-    Saves a screenshot to a file.
-
-    Args:
-        path (str): Output file path.
-        region (tuple[int, int, int, int] | None): Capture region.
-
-    Returns:
-        bool: True on success, False on failure.
-    """
-    
-    # CODE START
-    data=screenshot(region)
-    if data is None:
-        return False
-    with open(path,"wb") as f:
-        f.write(data)
-    return True
-    # CODE END
-
-
-
-def loadImageRAW(path):
-    """
-    Loads a BMP file and extracts raw pixel data.
-
-    Args:
-        path (str): Path to BMP file.
-
-    Returns:
-        tuple[int, int, bytes]: (width, height, raw BGRA buffer)
-    """
-    
-    # CODE START
-    with open(path, 'rb') as f:
-        data = f.read()
-        w, h = struct.unpack('<ii', data[18:26])
-        offset = struct.unpack('<I', data[10:14])
-        raw_pixels = data[offset:]
-        nw4 = w * 4
-        return w, abs(h), raw_pixels
-    # CODE END
-
-
-
-def hashRows(buf, w, h):
-    """
-    Computes CRC32 hashes for each row of a BGRA image.
-
-    Args:
-        buf (bytes): Raw BGRA buffer.
-        w (int): Width.
-        h (int): Height.
-
-    Returns:
-        list[int]: CRC32 hash per row.
-    """
-    
-    # CODE START
-    row_bytes = w * 4
-    hashes = []
-    for y in range(h):
-        start = y * row_bytes
-        row = buf[start:start+row_bytes]
-        hashes.append(zlib.crc32(row))
-    return hashes
-    # CODE END
-
-
-
-def locateOnScreen(path, confidence=0.9, region=None, minSearchTime=0):
-    """
-    Searches for an image on the screen using multi-stage filtering.
-
-    Args:
-        path (str): Path to BMP template.
-        confidence (float): Required match ratio (0..1).
-        region (tuple[int, int, int, int] | None): Search region.
-        minSearchTime (float): Minimum search duration.
-
-    Returns:
-        tuple[(x, y, w, h), float] | None:
-            Found box and confidence percentage, or None.
-    """
-    
-    # CODE START
-    with open(path, 'rb') as f:
-        data = f.read()
-        nw, nh = struct.unpack('<ii', data[18:26])
-        nw, nh = struct.unpack('<ii', data[18:26])
-        offset = struct.unpack('<I', data[10:14])[0]
-        raw = data[offset:]
-        nh = abs(nh)
-        needle_pixels = []
-        stride = (nw * 3 + 3) & ~3
-        for y in range(nh - 1, -1, -1):
-            row_start = y * stride
-            for x in range(0, nw * 3, 3):
-                b, g, r = raw[row_start + x : row_start + x + 3]
-                needle_pixels.append((r, g, b))
-    while True:
-        user32 = ctypes.windll.user32
-        gdi32 = ctypes.windll.gdi32
-        sw = user32.GetSystemMetrics(0)
-        sh = user32.GetSystemMetrics(1)
-        hdc = user32.GetDC(0)
-        mdc = gdi32.CreateCompatibleDC(hdc)
-        hbmp = gdi32.CreateCompatibleBitmap(hdc, sw, sh)
-        gdi32.SelectObject(mdc, hbmp)
-        gdi32.BitBlt(mdc, 0, 0, sw, sh, hdc, 0, 0, 0x00CC0020)
-        buf = (ctypes.c_ubyte * (sw * sh * 4))()
-        gdi32.GetBitmapBits(hbmp, sw * sh * 4, buf)
+        Returns:
+            tuple[int, int, bytes]: (width, height, raw BGRA buffer)
+        """
+        
+        # CODE START
+        if region:
+            x, y, w, h = region
+        else:
+            x, y = 0, 0
+            w = user32.GetSystemMetrics(0)
+            h = user32.GetSystemMetrics(1)
+        hdc_screen = user32.GetDC(0)
+        hdc_mem = gdi32.CreateCompatibleDC(hdc_screen)
+        hbmp = gdi32.CreateCompatibleBitmap(hdc_screen, w, h)
+        gdi32.SelectObject(hdc_mem, hbmp)
+        gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, x, y, 0x00CC0020)
+        total_bytes = w * h * 4
+        buffer = (ctypes.c_ubyte * total_bytes)()
+        gdi32.GetBitmapBits(hbmp, total_bytes, buffer)
         gdi32.DeleteObject(hbmp)
-        gdi32.DeleteDC(mdc)
-        user32.ReleaseDC(0, hdc)
-        for y in range(0, sh - nh + 1, 3):
-            for x in range(0, sw - nw + 1, 3):
-                # 1. БЫСТРЫЙ ФИЛЬТР (те самые 3 точки)
-                points_to_check = [(0,0), (nw//2, nh//2), (nw-1, nh-1)]
-                found_points = 0
-                for px, py in points_to_check:
-                    s_idx = ((y + py) * sw + (x + px)) * 4
-                    if (buf[s_idx+2], buf[s_idx+1], buf[s_idx]) == needle_pixels[py * nw + px]:
-                        found_points += 1
-                if found_points == len(points_to_check):
-                    matched_pixels = 0
-                    sample_step = 5
-                    total_sampled = 0
-                    for py in range(0, nh, sample_step):
-                        for px in range(0, nw, sample_step):
-                            total_sampled += 1
-                            s_idx = ((y + py) * sw + (x + px)) * 4
-                            if (buf[s_idx+2], buf[s_idx+1], buf[s_idx]) == needle_pixels[py * nw + px]:
-                                matched_pixels += 1
-                    current_confidence = matched_pixels / total_sampled
-                    if current_confidence >= confidence:
-                        return (x, y, nw, nh), current_confidence*100
-    # CODE END
+        gdi32.DeleteDC(hdc_mem)
+        user32.ReleaseDC(0, hdc_screen)
+        return w, h, buffer
+        # CODE END
 
 
+    @staticmethod
+    def _png_chunk(t,d):
+        """
+        Builds a PNG chunk.
 
-def center(box):
-    """
-    Returns the center point of a bounding box.
+        Args:
+            t (bytes): Chunk type (e.g., b'IHDR').
+            d (bytes): Chunk data.
 
-    Args:
-        box (tuple[int, int, int, int]): (x, y, w, h).
-
-    Returns:
-        tuple[int, int]: (center_x, center_y).
-    """
-    
-    # CODE START
-    x,y,w,h=box
-    return x+w//2,y+h//2
-    # CODE END
-
-
-
-def locateCenterOnScreen(path, confidence=0.9, region=[0,0,1920,1080], minSearchTime=0):
-    """
-    Finds an image on the screen and returns its center.
-
-    Args:
-        path (str): Path to BMP template.
-        confidence (float): Required match ratio.
-        region (tuple[int, int, int, int]): Search region.
-        minSearchTime (float): Minimum search duration.
-
-    Returns:
-        tuple[int, int] | None: Center coordinates or None.
-    """
-    
-    # CODE START
-    r = locateOnScreen(path, confidence, region, minSearchTime)
-    return None if r is None else (r[0] + r[2]//2, r[1] + r[3]//2)
-    # CODE END
+        Returns:
+            bytes: Complete PNG chunk with CRC.
+        """
+        
+        # CODE START
+        return struct.pack("!I",len(d))+t+d+struct.pack("!I",zlib.crc32(t+d)&0xffffffff)
+        # CODE END
 
 
+    @staticmethod
+    def _encodePngBGRA(w,h,data):
+        """
+        Encodes raw BGRA pixel data into a PNG image.
 
-def locateAllOnScreen(path, region=None, step=3):
-    """
-    Finds all occurrences of an image on the screen.
+        Args:
+            w (int): Width.
+            h (int): Height.
+            data (bytes): Raw BGRA buffer.
 
-    Args:
-        path (str): Path to BMP template.
-        region (tuple[int, int, int, int] | None): Search region.
-        step (int): Pixel step for scanning.
-
-    Returns:
-        list[tuple[int, int, int, int]]: List of bounding boxes.
-    """
-    
-    # CODE START
-    r = _getScreenRAW(region)
-    if r is None:
-        return []
-    sw, sh, screen = r
-    nw, nh, needle = loadImageRAW(path)
-    if nw * nh > 200 * 200:
-        return []
-    hay_mv = memoryview(screen)
-    sw4 = sw * 4
-    row_bytes = nw * 4
-    needle_hashes = hashRows(needle, nw, nh)
-    first_hash = needle_hashes[0]
-    max_y = sh - nh + 1
-    max_x = sw - nw + 1
-    results = []
-    for y in range(0, max_y, step):
-        base_y = y * sw4
-        for x in range(0, max_x, step):
-            si = base_y + x * 4
-            row = hay_mv[si:si+row_bytes]
-            if zlib.crc32(row) != first_hash:
-                continue
-            ok = True
-            for j in range(1, nh):
-                si2 = (y + j) * sw4 + x * 4
-                row2 = hay_mv[si2:si2+row_bytes]
-                if zlib.crc32(row2) != needle_hashes[j]:
-                    ok = False
-                    break
-            if ok:
-                results.append((x, y, nw, nh))
-    return results
-    # CODE END
+        Returns:
+            bytes: PNG-encoded image.
+        """
+        
+        # CODE START
+        fixed=bytearray(len(data))
+        for i in range(0,len(data),4):
+            b=data[i]
+            g=data[i+1]
+            r=data[i+2]
+            a=data[i+3]
+            fixed[i]=r
+            fixed[i+1]=g
+            fixed[i+2]=b
+            fixed[i+3]=a
+        sig=b"\x89PNG\r\n\x1a\n"
+        ihdr=struct.pack("!IIBBBBB",w,h,8,6,0,0,0)
+        out=sig+screen._png_chunk(b"IHDR",ihdr)
+        stride=w*4
+        raw=b""
+        for y in range(h):
+            row=fixed[y*stride:(y+1)*stride]
+            raw+=b"\x00"+row
+        comp=zlib.compress(raw,9)
+        out+=screen._png_chunk(b"IDAT",comp)
+        out+=screen._png_chunk(b"IEND",b"")
+        return out
+        # CODE END
 
 
+    @staticmethod
+    def screenshot(region=None):
+        """
+        Captures a screenshot and returns PNG bytes.
 
-def locate(needle, haystack, nw, nh, sw, sh, step=3):
-    """
-    Searches for a raw BGRA image inside another raw BGRA buffer.
+        Args:
+            region (tuple[int, int, int, int] | None):
+                (x, y, width, height). If None, captures full screen.
 
-    Args:
-        needle (bytes): Template BGRA buffer.
-        haystack (bytes): Screen BGRA buffer.
-        nw (int): Template width.
-        nh (int): Template height.
-        sw (int): Screen width.
-        sh (int): Screen height.
-        step (int): Pixel step.
-
-    Returns:
-        tuple[int, int, int, int] | None: Found box or None.
-    """
-    
-    # CODE START
-    hay_mv = memoryview(haystack)
-    ned_mv = memoryview(needle)
-    sw4 = sw * 4
-    row_bytes = nw * 4
-    needle_hashes = hashRows(needle, nw, nh)
-    first_hash = needle_hashes[0]
-    max_y = sh - nh + 1
-    max_x = sw - nw + 1
-    for y in range(0, max_y, step):
-        base_y = y * sw4
-        for x in range(0, max_x, step):
-            si = base_y + x * 4
-            row = hay_mv[si:si+row_bytes]
-            if zlib.crc32(row) != first_hash:
-                continue
-            ok = True
-            for j in range(1, nh):
-                si2 = (y + j) * sw4 + x * 4
-                row2 = hay_mv[si2:si2+row_bytes]
-                if zlib.crc32(row2) != needle_hashes[j]:
-                    ok = False
-                    break
-            if ok:
-                return x, y, nw, nh
-    return None
-    # CODE END
+        Returns:
+            bytes | None: PNG image data or None on failure.
+        """
+        
+        # CODE START
+        r=screen._getScreenRAW(region)
+        if r is None:
+            return None
+        w,h,buf=r
+        return screen._encodePngBGRA(w,h,buf)
+        # CODE END
 
 
+    @staticmethod
+    def screenshotToFile(path,region=None):
+        """
+        Saves a screenshot to a file.
 
-def pixelMatchesColorRaw(x,y,color,tolerance,screen_raw,sw):
-    """
-    Compares a pixel color inside a raw BGRA buffer.
+        Args:
+            path (str): Output file path.
+            region (tuple[int, int, int, int] | None): Capture region.
 
-    Args:
-        x (int): X coordinate.
-        y (int): Y coordinate.
-        color (tuple[int, int, int]): Expected (R, G, B).
-        tolerance (int): Allowed deviation.
-        screen_raw (bytes): Raw BGRA buffer.
-        sw (int): Screen width.
+        Returns:
+            bool: True on success, False on failure.
+        """
+        
+        # CODE START
+        data=screen.screenshot(region)
+        if data is None:
+            return False
+        with open(path,"wb") as f:
+            f.write(data)
+        return True
+        # CODE END
 
-    Returns:
-        bool: True if pixel matches within tolerance.
-    """
-    
-    # CODE START
-    i=(y*sw+x)*4
-    b=screen_raw[i]
-    g=screen_raw[i+1]
-    r=screen_raw[i+2]
-    er,eg,eb=color
-    return abs(r-er)<=tolerance and abs(g-eg)<=tolerance and abs(b-eb) <= tolerance
-    # CODE END
+
+    @staticmethod
+    def loadImageRAW(path):
+        """
+        Loads a BMP file and extracts raw pixel data.
+
+        Args:
+            path (str): Path to BMP file.
+
+        Returns:
+            tuple[int, int, bytes]: (width, height, raw BGRA buffer)
+        """
+        
+        # CODE START
+        with open(path, 'rb') as f:
+            data = f.read()
+            w, h = struct.unpack('<ii', data[18:26])
+            offset = struct.unpack('<I', data[10:14])
+            raw_pixels = data[offset:]
+            nw4 = w * 4
+            return w, abs(h), raw_pixels
+        # CODE END
+
+
+    @staticmethod
+    def hashRows(buf, w, h):
+        """
+        Computes CRC32 hashes for each row of a BGRA image.
+
+        Args:
+            buf (bytes): Raw BGRA buffer.
+            w (int): Width.
+            h (int): Height.
+
+        Returns:
+            list[int]: CRC32 hash per row.
+        """
+        
+        # CODE START
+        row_bytes = w * 4
+        hashes = []
+        for y in range(h):
+            start = y * row_bytes
+            row = buf[start:start+row_bytes]
+            hashes.append(zlib.crc32(row))
+        return hashes
+        # CODE END
+
+
+    @staticmethod
+    def locateOnScreen(path, confidence=0.9, region=None, minSearchTime=0):
+        """
+        Searches for an image on the screen using multi-stage filtering.
+
+        Args:
+            path (str): Path to BMP template.
+            confidence (float): Required match ratio (0..1).
+            region (tuple[int, int, int, int] | None): Search region.
+            minSearchTime (float): Minimum search duration.
+
+        Returns:
+            tuple[(x, y, w, h), float] | None:
+                Found box and confidence percentage, or None.
+        """
+        
+        # CODE START
+        with open(path, 'rb') as f:
+            data = f.read()
+            nw, nh = struct.unpack('<ii', data[18:26])
+            nw, nh = struct.unpack('<ii', data[18:26])
+            offset = struct.unpack('<I', data[10:14])[0]
+            raw = data[offset:]
+            nh = abs(nh)
+            needle_pixels = []
+            stride = (nw * 3 + 3) & ~3
+            for y in range(nh - 1, -1, -1):
+                row_start = y * stride
+                for x in range(0, nw * 3, 3):
+                    b, g, r = raw[row_start + x : row_start + x + 3]
+                    needle_pixels.append((r, g, b))
+        while True:
+            sw = user32.GetSystemMetrics(0)
+            sh = user32.GetSystemMetrics(1)
+            hdc = user32.GetDC(0)
+            mdc = gdi32.CreateCompatibleDC(hdc)
+            hbmp = gdi32.CreateCompatibleBitmap(hdc, sw, sh)
+            gdi32.SelectObject(mdc, hbmp)
+            gdi32.BitBlt(mdc, 0, 0, sw, sh, hdc, 0, 0, 0x00CC0020)
+            buf = (ctypes.c_ubyte * (sw * sh * 4))()
+            gdi32.GetBitmapBits(hbmp, sw * sh * 4, buf)
+            gdi32.DeleteObject(hbmp)
+            gdi32.DeleteDC(mdc)
+            user32.ReleaseDC(0, hdc)
+            for y in range(0, sh - nh + 1, 3):
+                for x in range(0, sw - nw + 1, 3):
+                    points_to_check = [(0,0), (nw//2, nh//2), (nw-1, nh-1)]
+                    found_points = 0
+                    for px, py in points_to_check:
+                        s_idx = ((y + py) * sw + (x + px)) * 4
+                        if (buf[s_idx+2], buf[s_idx+1], buf[s_idx]) == needle_pixels[py * nw + px]:
+                            found_points += 1
+                    if found_points == len(points_to_check):
+                        matched_pixels = 0
+                        sample_step = 5
+                        total_sampled = 0
+                        for py in range(0, nh, sample_step):
+                            for px in range(0, nw, sample_step):
+                                total_sampled += 1
+                                s_idx = ((y + py) * sw + (x + px)) * 4
+                                if (buf[s_idx+2], buf[s_idx+1], buf[s_idx]) == needle_pixels[py * nw + px]:
+                                    matched_pixels += 1
+                        current_confidence = matched_pixels / total_sampled
+                        if current_confidence >= confidence:
+                            return (x, y, nw, nh), current_confidence*100
+        # CODE END
+
+
+    @staticmethod
+    def center(box):
+        """
+        Returns the center point of a bounding box.
+
+        Args:
+            box (tuple[int, int, int, int]): (x, y, w, h).
+
+        Returns:
+            tuple[int, int]: (center_x, center_y).
+        """
+        
+        # CODE START
+        x,y,w,h=box
+        return x+w//2,y+h//2
+        # CODE END
+
+
+    @staticmethod
+    def locateCenterOnScreen(path, confidence=0.9, region=[0,0,1920,1080], minSearchTime=0):
+        """
+        Finds an image on the screen and returns its center.
+
+        Args:
+            path (str): Path to BMP template.
+            confidence (float): Required match ratio.
+            region (tuple[int, int, int, int]): Search region.
+            minSearchTime (float): Minimum search duration.
+
+        Returns:
+            tuple[int, int] | None: Center coordinates or None.
+        """
+        
+        # CODE START
+        r = screen.locateOnScreen(path, confidence, region, minSearchTime)
+        return None if r is None else (r[0] + r[2]//2, r[1] + r[3]//2)
+        # CODE END
+
+
+    @staticmethod
+    def locateAllOnScreen(path, region=None, step=3):
+        """
+        Finds all occurrences of an image on the screen.
+
+        Args:
+            path (str): Path to BMP template.
+            region (tuple[int, int, int, int] | None): Search region.
+            step (int): Pixel step for scanning.
+
+        Returns:
+            list[tuple[int, int, int, int]]: List of bounding boxes.
+        """
+        
+        # CODE START
+        r = screen._getScreenRAW(region)
+        if r is None:
+            return []
+        sw, sh, screen = r
+        nw, nh, needle = screen.loadImageRAW(path)
+        if nw * nh > 200 * 200:
+            return []
+        hay_mv = memoryview(screen)
+        sw4 = sw * 4
+        row_bytes = nw * 4
+        needle_hashes = screen.hashRows(needle, nw, nh)
+        first_hash = needle_hashes[0]
+        max_y = sh - nh + 1
+        max_x = sw - nw + 1
+        results = []
+        for y in range(0, max_y, step):
+            base_y = y * sw4
+            for x in range(0, max_x, step):
+                si = base_y + x * 4
+                row = hay_mv[si:si+row_bytes]
+                if zlib.crc32(row) != first_hash:
+                    continue
+                ok = True
+                for j in range(1, nh):
+                    si2 = (y + j) * sw4 + x * 4
+                    row2 = hay_mv[si2:si2+row_bytes]
+                    if zlib.crc32(row2) != needle_hashes[j]:
+                        ok = False
+                        break
+                if ok:
+                    results.append((x, y, nw, nh))
+        return results
+        # CODE END
+
+
+    @staticmethod
+    def locate(needle, haystack, nw, nh, sw, sh, step=3):
+        """
+        Searches for a raw BGRA image inside another raw BGRA buffer.
+
+        Args:
+            needle (bytes): Template BGRA buffer.
+            haystack (bytes): Screen BGRA buffer.
+            nw (int): Template width.
+            nh (int): Template height.
+            sw (int): Screen width.
+            sh (int): Screen height.
+            step (int): Pixel step.
+
+        Returns:
+            tuple[int, int, int, int] | None: Found box or None.
+        """
+        
+        # CODE START
+        hay_mv = memoryview(haystack)
+        ned_mv = memoryview(needle)
+        sw4 = sw * 4
+        row_bytes = nw * 4
+        needle_hashes = screen.hashRows(needle, nw, nh)
+        first_hash = needle_hashes[0]
+        max_y = sh - nh + 1
+        max_x = sw - nw + 1
+        for y in range(0, max_y, step):
+            base_y = y * sw4
+            for x in range(0, max_x, step):
+                si = base_y + x * 4
+                row = hay_mv[si:si+row_bytes]
+                if zlib.crc32(row) != first_hash:
+                    continue
+                ok = True
+                for j in range(1, nh):
+                    si2 = (y + j) * sw4 + x * 4
+                    row2 = hay_mv[si2:si2+row_bytes]
+                    if zlib.crc32(row2) != needle_hashes[j]:
+                        ok = False
+                        break
+                if ok:
+                    return x, y, nw, nh
+        return None
+        # CODE END
+
+
+    @staticmethod
+    def pixelMatchesColorRaw(x,y,color,tolerance,screen_raw,sw):
+        """
+        Compares a pixel color inside a raw BGRA buffer.
+
+        Args:
+            x (int): X coordinate.
+            y (int): Y coordinate.
+            color (tuple[int, int, int]): Expected (R, G, B).
+            tolerance (int): Allowed deviation.
+            screen_raw (bytes): Raw BGRA buffer.
+            sw (int): Screen width.
+
+        Returns:
+            bool: True if pixel matches within tolerance.
+        """
+        
+        # CODE START
+        i=(y*sw+x)*4
+        b=screen_raw[i]
+        g=screen_raw[i+1]
+        r=screen_raw[i+2]
+        er,eg,eb=color
+        return abs(r-er)<=tolerance and abs(g-eg)<=tolerance and abs(b-eb) <= tolerance
+        # CODE END
 
 # FUNCTIONS END
 
@@ -1939,247 +2021,251 @@ class WAVEINCAPSW(ctypes.Structure):
 ole32.CoInitialize(None)
 # SCTUCTURES END
 
-# FUNCTIONS START
-def _guid(s):
-    """
-    Converts a GUID string into a GUID structure.
+class sound:
 
-    Args:
-        s (str): GUID in string form, e.g. "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}".
+    # FUNCTIONS START
 
-    Returns:
-        GUID: Parsed GUID structure.
-    """
-    
-    # CODE START
-    g = GUID()
-    ole32.CLSIDFromString(s, ctypes.byref(g))
-    return g
-    # CODE END
-
-
-
-def getAudioOutputDevices():
-    """
-    Returns a list of available audio output devices.
-
-    Uses WinMM waveOutGetDevCapsW to enumerate devices.
-
-    Returns:
-        list[str]: Names of output devices.
-    """
-    
-    # CODE START
-    count = ctypes.windll.winmm.waveOutGetNumDevs()
-    devices = []
-    caps = WAVEOUTCAPSW()
-    for i in range(count):
-        if ctypes.windll.winmm.waveOutGetDevCapsW(i, ctypes.byref(caps), ctypes.sizeof(caps)) == 0:
-            devices.append(caps.szPname)
-    return devices
-    # CODE END
-
-
-
-def getAudioInputDevices():
-    """
-    Returns a list of available audio input devices (microphones).
-
-    Uses WinMM waveInGetDevCapsW to enumerate devices.
-
-    Returns:
-        list[str]: Names of input devices.
-    """
-    
-    # CODE START
-    count = ctypes.windll.winmm.waveInGetNumDevs()
-    devices = []
-    caps = WAVEINCAPSW()
-    for i in range(count):
-        if ctypes.windll.winmm.waveInGetDevCapsW(i, ctypes.byref(caps), ctypes.sizeof(caps)) == 0:
-            devices.append(caps.szPname)
-    return devices
-    # CODE END
-
-
-
-def playSound(path):
-    """
-    Plays a sound file using WinMM PlaySoundW.
-
-    Args:
-        path (str): Path to WAV file.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    ctypes.windll.winmm.PlaySoundW(path, None, 0x00020000 | 0x0002)
-    # CODE END
-
-
-
-def getVolume():
-    """
-    Gets the system master volume level (0–100%).
-
-    Uses:
-        - MMDeviceEnumerator
-        - IAudioEndpointVolume
-
-    Returns:
-        int: Volume percentage (0–100), or -1 on failure.
-    """
-    
-    # CODE START
-    CLSID_MMDeviceEnumerator = "{BCDE0395-E52F-467C-8E3D-C4579291692E}"
-    IID_IMMDeviceEnumerator = "{A95664D2-9614-4F35-A746-DE8DB63617E6}"
-    IID_IAudioEndpointVolume = "{5CDF2C82-841E-4546-9722-0CF74078229A}"
-    class GUID(ctypes.Structure):
-        _fields_ = [("Data1", wintypes.DWORD), ("Data2", wintypes.WORD),
-                    ("Data3", wintypes.WORD), ("Data4", ctypes.c_byte * 8)]
+    @staticmethod
     def _guid(s):
+        """
+        Converts a GUID string into a GUID structure.
+
+        Args:
+            s (str): GUID in string form, e.g. "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}".
+
+        Returns:
+            GUID: Parsed GUID structure.
+        """
+        
+        # CODE START
         g = GUID()
         ole32.CLSIDFromString(s, ctypes.byref(g))
         return g
-    try:
-        enum = ctypes.c_void_p()
-        ole32.CoCreateInstance(ctypes.byref(_guid(CLSID_MMDeviceEnumerator)), None, 1, ctypes.byref(_guid(IID_IMMDeviceEnumerator)), ctypes.byref(enum))
-        device = ctypes.c_void_p()
-        vt_enum = ctypes.cast(enum, ctypes.POINTER(ctypes.c_void_p))
-        # Метод GetDefaultAudioEndpoint (eRender=0, eConsole=0)
-        ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_void_p))(
-            ctypes.cast(vt_enum.contents, ctypes.POINTER(ctypes.c_void_p))[4])(enum, 0, 0, ctypes.byref(device))
-        volume = ctypes.c_void_p()
-        vt_device = ctypes.cast(device, ctypes.POINTER(ctypes.c_void_p))
-        ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.POINTER(GUID), ctypes.c_int, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p))(
-            ctypes.cast(vt_device.contents, ctypes.POINTER(ctypes.c_void_p))[3])(device, ctypes.byref(_guid(IID_IAudioEndpointVolume)), 7, None, ctypes.byref(volume))
-        level = ctypes.c_float(0)
-        vt_volume = ctypes.cast(volume, ctypes.POINTER(ctypes.c_void_p))
-        ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.POINTER(ctypes.c_float))(
-            ctypes.cast(vt_volume.contents, ctypes.POINTER(ctypes.c_void_p))[9])(volume, ctypes.byref(level))
-        return round(level.value * 100)
-    except:
-        return -1
-    # CODE END
+        # CODE END
 
 
+    @staticmethod
+    def getAudioOutputDevices():
+        """
+        Returns a list of available audio output devices.
 
-def setVolume(level_percent):
-    """
-    Sets the system master volume level.
+        Uses WinMM waveOutGetDevCapsW to enumerate devices.
 
-    Args:
-        level_percent (int): Volume 0–100.
-
-    Returns:
-        bool: True on success, False on failure.
-    """
-    
-    # CODE START
-    if level_percent > 100: level_percent = 100
-    if level_percent < 0: level_percent = 0
-    level_float = level_percent / 100.0
-    CLSID_MMDeviceEnumerator = "{BCDE0395-E52F-467C-8E3D-C4579291692E}"
-    IID_IMMDeviceEnumerator = "{A95664D2-9614-4F35-A746-DE8DB63617E6}"
-    IID_IAudioEndpointVolume = "{5CDF2C82-841E-4546-9722-0CF74078229A}"
-    try:
-        enum = ctypes.c_void_p()
-        ole32.CoCreateInstance(ctypes.byref(_guid(CLSID_MMDeviceEnumerator)), None, 1, ctypes.byref(_guid(IID_IMMDeviceEnumerator)), ctypes.byref(enum))
-        device = ctypes.c_void_p()
-        vt_enum = ctypes.cast(enum, ctypes.POINTER(ctypes.c_void_p))
-        ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_void_p))(
-            ctypes.cast(vt_enum.contents, ctypes.POINTER(ctypes.c_void_p))[4])(enum, 0, 0, ctypes.byref(device))
-        volume = ctypes.c_void_p()
-        vt_device = ctypes.cast(device, ctypes.POINTER(ctypes.c_void_p))
-        ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.POINTER(GUID), ctypes.c_int, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p))(
-            ctypes.cast(vt_device.contents, ctypes.POINTER(ctypes.c_void_p))[3])(device, ctypes.byref(_guid(IID_IAudioEndpointVolume)), 7, None, ctypes.byref(volume))
-        vt_volume = ctypes.cast(volume, ctypes.POINTER(ctypes.c_void_p))
-        ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.c_float, ctypes.c_void_p)(
-            ctypes.cast(vt_volume.contents, ctypes.POINTER(ctypes.c_void_p))[7])(volume, level_float, None)
-        return True
-    except:
-        return False
-    # CODE END
+        Returns:
+            list[str]: Names of output devices.
+        """
+        
+        # CODE START
+        count = ctypes.windll.winmm.waveOutGetNumDevs()
+        devices = []
+        caps = WAVEOUTCAPSW()
+        for i in range(count):
+            if ctypes.windll.winmm.waveOutGetDevCapsW(i, ctypes.byref(caps), ctypes.sizeof(caps)) == 0:
+                devices.append(caps.szPname)
+        return devices
+        # CODE END
 
 
+    @staticmethod
+    def getAudioInputDevices():
+        """
+        Returns a list of available audio input devices (microphones).
 
-def getMicHZ(duration=0.1):
-    """
-    Measures the dominant frequency of microphone input using zero-crossings.
+        Uses WinMM waveInGetDevCapsW to enumerate devices.
 
-    Args:
-        duration (float): Recording duration in seconds.
-
-    Returns:
-        float: Estimated frequency in Hz.
-    """
-    
-    # CODE START
-    wfx = WAVEFORMATEX(1, 1, 44100, 88200, 2, 16, 0)
-    hIn = ctypes.c_void_p()
-    if winmm.waveInOpen(ctypes.byref(hIn), -1, ctypes.byref(wfx), 0, 0, 0) != 0:
-        return 0
-    size = int(44100 * duration * 2) 
-    buf = (ctypes.c_byte * size)()
-    hdr = WAVEHDR(ctypes.cast(buf, ctypes.c_void_p), size, 0, 0, 0, 0, 0, 0)
-    winmm.waveInPrepareHeader(hIn, ctypes.byref(hdr), ctypes.sizeof(WAVEHDR))
-    winmm.waveInAddBuffer(hIn, ctypes.byref(hdr), ctypes.sizeof(WAVEHDR))
-    winmm.waveInStart(hIn)
-    while not (hdr.dwFlags & 0x01):
-        pass
-    winmm.waveInStop(hIn)
-    samples = ctypes.cast(buf, ctypes.POINTER(ctypes.c_short))
-    num_samples = hdr.dwBytesRecorded // 2
-    crossings = 0
-    for i in range(1, num_samples):
-        if (samples[i-1] < 0 and samples[i] >= 0):
-            crossings += 1      
-    hz = crossings / duration
-    winmm.waveInUnprepareHeader(hIn, ctypes.byref(hdr), ctypes.sizeof(WAVEHDR))
-    winmm.waveInClose(hIn)
-    return hz
-    # CODE END
+        Returns:
+            list[str]: Names of input devices.
+        """
+        
+        # CODE START
+        count = ctypes.windll.winmm.waveInGetNumDevs()
+        devices = []
+        caps = WAVEINCAPSW()
+        for i in range(count):
+            if ctypes.windll.winmm.waveInGetDevCapsW(i, ctypes.byref(caps), ctypes.sizeof(caps)) == 0:
+                devices.append(caps.szPname)
+        return devices
+        # CODE END
 
 
+    @staticmethod
+    def playSound(path):
+        """
+        Plays a sound file using WinMM PlaySoundW.
 
-def getMicVolume(duration=0.1):
-    """
-    Measures microphone volume using peak amplitude.
+        Args:
+            path (str): Path to WAV file.
 
-    Args:
-        duration (float): Recording duration in seconds.
+        Returns:
+            None
+        """
+        
+        # CODE START
+        ctypes.windll.winmm.PlaySoundW(path, None, 0x00020000 | 0x0002)
+        # CODE END
 
-    Returns:
-        int: Volume level (0–100).
-    """
-    
-    # CODE START
-    wfx = WAVEFORMATEX(1, 1, 44100, 88200, 2, 16, 0)
-    hIn = ctypes.c_void_p()
-    if winmm.waveInOpen(ctypes.byref(hIn), -1, ctypes.byref(wfx), 0, 0, 0) != 0:
-        return 0
-    size = int(44100 * duration * 2)
-    buf = (ctypes.c_byte * size)()
-    hdr = WAVEHDR(ctypes.cast(buf, ctypes.c_void_p), size, 0, 0, 0, 0, 0, 0)
-    winmm.waveInPrepareHeader(hIn, ctypes.byref(hdr), ctypes.sizeof(WAVEHDR))
-    winmm.waveInAddBuffer(hIn, ctypes.byref(hdr), ctypes.sizeof(WAVEHDR))
-    winmm.waveInStart(hIn)
-    while not (hdr.dwFlags & 0x01): pass
-    winmm.waveInStop(hIn)
-    samples = ctypes.cast(buf, ctypes.POINTER(ctypes.c_short))
-    num_samples = hdr.dwBytesRecorded // 2
-    max_amp = 0
-    for i in range(num_samples):
-        val = abs(samples[i])
-        if val > max_amp:
-            max_amp = val
-    volume = (max_amp / 32767) * 100
-    winmm.waveInUnprepareHeader(hIn, ctypes.byref(hdr), ctypes.sizeof(WAVEHDR))
-    winmm.waveInClose(hIn)
-    return round(volume)
-    # CODE END
+
+    @staticmethod
+    def getVolume():
+        """
+        Gets the system master volume level (0–100%).
+
+        Uses:
+            - MMDeviceEnumerator
+            - IAudioEndpointVolume
+
+        Returns:
+            int: Volume percentage (0–100), or -1 on failure.
+        """
+        
+        # CODE START
+        CLSID_MMDeviceEnumerator = "{BCDE0395-E52F-467C-8E3D-C4579291692E}"
+        IID_IMMDeviceEnumerator = "{A95664D2-9614-4F35-A746-DE8DB63617E6}"
+        IID_IAudioEndpointVolume = "{5CDF2C82-841E-4546-9722-0CF74078229A}"
+        class GUID(ctypes.Structure):
+            _fields_ = [("Data1", wintypes.DWORD), ("Data2", wintypes.WORD),
+                        ("Data3", wintypes.WORD), ("Data4", ctypes.c_byte * 8)]
+        def _guid(s):
+            g = GUID()
+            ole32.CLSIDFromString(s, ctypes.byref(g))
+            return g
+        try:
+            enum = ctypes.c_void_p()
+            ole32.CoCreateInstance(ctypes.byref(_guid(CLSID_MMDeviceEnumerator)), None, 1, ctypes.byref(_guid(IID_IMMDeviceEnumerator)), ctypes.byref(enum))
+            device = ctypes.c_void_p()
+            vt_enum = ctypes.cast(enum, ctypes.POINTER(ctypes.c_void_p))
+            # Метод GetDefaultAudioEndpoint (eRender=0, eConsole=0)
+            ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_void_p))(
+                ctypes.cast(vt_enum.contents, ctypes.POINTER(ctypes.c_void_p))[4])(enum, 0, 0, ctypes.byref(device))
+            volume = ctypes.c_void_p()
+            vt_device = ctypes.cast(device, ctypes.POINTER(ctypes.c_void_p))
+            ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.POINTER(GUID), ctypes.c_int, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p))(
+                ctypes.cast(vt_device.contents, ctypes.POINTER(ctypes.c_void_p))[3])(device, ctypes.byref(_guid(IID_IAudioEndpointVolume)), 7, None, ctypes.byref(volume))
+            level = ctypes.c_float(0)
+            vt_volume = ctypes.cast(volume, ctypes.POINTER(ctypes.c_void_p))
+            ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.POINTER(ctypes.c_float))(
+                ctypes.cast(vt_volume.contents, ctypes.POINTER(ctypes.c_void_p))[9])(volume, ctypes.byref(level))
+            return round(level.value * 100)
+        except:
+            return -1
+        # CODE END
+
+
+    @staticmethod
+    def setVolume(level_percent):
+        """
+        Sets the system master volume level.
+
+        Args:
+            level_percent (int): Volume 0–100.
+
+        Returns:
+            bool: True on success, False on failure.
+        """
+        
+        # CODE START
+        if level_percent > 100: level_percent = 100
+        if level_percent < 0: level_percent = 0
+        level_float = level_percent / 100.0
+        CLSID_MMDeviceEnumerator = "{BCDE0395-E52F-467C-8E3D-C4579291692E}"
+        IID_IMMDeviceEnumerator = "{A95664D2-9614-4F35-A746-DE8DB63617E6}"
+        IID_IAudioEndpointVolume = "{5CDF2C82-841E-4546-9722-0CF74078229A}"
+        try:
+            enum = ctypes.c_void_p()
+            ole32.CoCreateInstance(ctypes.byref(sound._guid(CLSID_MMDeviceEnumerator)), None, 1, ctypes.byref(sound._guid(IID_IMMDeviceEnumerator)), ctypes.byref(enum))
+            device = ctypes.c_void_p()
+            vt_enum = ctypes.cast(enum, ctypes.POINTER(ctypes.c_void_p))
+            ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_void_p))(
+                ctypes.cast(vt_enum.contents, ctypes.POINTER(ctypes.c_void_p))[4])(enum, 0, 0, ctypes.byref(device))
+            volume = ctypes.c_void_p()
+            vt_device = ctypes.cast(device, ctypes.POINTER(ctypes.c_void_p))
+            ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.POINTER(GUID), ctypes.c_int, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p))(
+                ctypes.cast(vt_device.contents, ctypes.POINTER(ctypes.c_void_p))[3])(device, ctypes.byref(sound._guid(IID_IAudioEndpointVolume)), 7, None, ctypes.byref(volume))
+            vt_volume = ctypes.cast(volume, ctypes.POINTER(ctypes.c_void_p))
+            ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.c_float, ctypes.c_void_p)(
+                ctypes.cast(vt_volume.contents, ctypes.POINTER(ctypes.c_void_p))[7])(volume, level_float, None)
+            return True
+        except:
+            return False
+        # CODE END
+
+
+    @staticmethod
+    def getMicHZ(duration=0.1):
+        """
+        Measures the dominant frequency of microphone input using zero-crossings.
+
+        Args:
+            duration (float): Recording duration in seconds.
+
+        Returns:
+            float: Estimated frequency in Hz.
+        """
+        
+        # CODE START
+        wfx = WAVEFORMATEX(1, 1, 44100, 88200, 2, 16, 0)
+        hIn = ctypes.c_void_p()
+        if winmm.waveInOpen(ctypes.byref(hIn), -1, ctypes.byref(wfx), 0, 0, 0) != 0:
+            return 0
+        size = int(44100 * duration * 2) 
+        buf = (ctypes.c_byte * size)()
+        hdr = WAVEHDR(ctypes.cast(buf, ctypes.c_void_p), size, 0, 0, 0, 0, 0, 0)
+        winmm.waveInPrepareHeader(hIn, ctypes.byref(hdr), ctypes.sizeof(WAVEHDR))
+        winmm.waveInAddBuffer(hIn, ctypes.byref(hdr), ctypes.sizeof(WAVEHDR))
+        winmm.waveInStart(hIn)
+        while not (hdr.dwFlags & 0x01):
+            pass
+        winmm.waveInStop(hIn)
+        samples = ctypes.cast(buf, ctypes.POINTER(ctypes.c_short))
+        num_samples = hdr.dwBytesRecorded // 2
+        crossings = 0
+        for i in range(1, num_samples):
+            if (samples[i-1] < 0 and samples[i] >= 0):
+                crossings += 1      
+        hz = crossings / duration
+        winmm.waveInUnprepareHeader(hIn, ctypes.byref(hdr), ctypes.sizeof(WAVEHDR))
+        winmm.waveInClose(hIn)
+        return hz
+        # CODE END
+
+
+    @staticmethod
+    def getMicVolume(duration=0.1):
+        """
+        Measures microphone volume using peak amplitude.
+
+        Args:
+            duration (float): Recording duration in seconds.
+
+        Returns:
+            int: Volume level (0–100).
+        """
+        
+        # CODE START
+        wfx = WAVEFORMATEX(1, 1, 44100, 88200, 2, 16, 0)
+        hIn = ctypes.c_void_p()
+        if winmm.waveInOpen(ctypes.byref(hIn), -1, ctypes.byref(wfx), 0, 0, 0) != 0:
+            return 0
+        size = int(44100 * duration * 2)
+        buf = (ctypes.c_byte * size)()
+        hdr = WAVEHDR(ctypes.cast(buf, ctypes.c_void_p), size, 0, 0, 0, 0, 0, 0)
+        winmm.waveInPrepareHeader(hIn, ctypes.byref(hdr), ctypes.sizeof(WAVEHDR))
+        winmm.waveInAddBuffer(hIn, ctypes.byref(hdr), ctypes.sizeof(WAVEHDR))
+        winmm.waveInStart(hIn)
+        while not (hdr.dwFlags & 0x01): pass
+        winmm.waveInStop(hIn)
+        samples = ctypes.cast(buf, ctypes.POINTER(ctypes.c_short))
+        num_samples = hdr.dwBytesRecorded // 2
+        max_amp = 0
+        for i in range(num_samples):
+            val = abs(samples[i])
+            if val > max_amp:
+                max_amp = val
+        volume = (max_amp / 32767) * 100
+        winmm.waveInUnprepareHeader(hIn, ctypes.byref(hdr), ctypes.sizeof(WAVEHDR))
+        winmm.waveInClose(hIn)
+        return round(volume)
+        # CODE END
 
 # FUNCTIONS END
 
@@ -2213,140 +2299,144 @@ class OSVERSIONINFOEXW(ctypes.Structure):
     ]
 # STRUCTURES END
 
-# FUNCTIONS START
-def BSOD(code=0xDEADDEAD):
-    """
-    {WARNING! UNSAVED DATA CAN BE LOST}
-    Callback a BSOD (Blue Screen of Death).
+class system:
 
-    Args:
-        code (hex): NTSTATUS error code to display:
-            0xDEADDEAD – MANUALLY_INITIATED_CRASH (Safest for OS)
-            0xC0000001 – STATUS_UNSUCCESSFUL (Standard crash)
-            0xC0000022 – STATUS_ACCESS_DENIED (Classic error)
-
-    Returns:
-        None
-    """
+    # FUNCTIONS START
     
-    # CODE START
-    status = ctypes.c_int()
-    nt.RtlAdjustPrivilege(19, 1, 0, ctypes.byref(status))
-    response = wintypes.DWORD()
-    nt.NtRaiseHardError(code, 0, 0, None, 6, ctypes.byref(response))
-    # CODE END
+    @staticmethod
+    def BSOD(code=0xDEADDEAD):
+        """
+        {WARNING! UNSAVED DATA CAN BE LOST}
+        Callback a BSOD (Blue Screen of Death).
+
+        Args:
+            code (hex): NTSTATUS error code to display:
+                0xDEADDEAD – MANUALLY_INITIATED_CRASH (Safest for OS)
+                0xC0000001 – STATUS_UNSUCCESSFUL (Standard crash)
+                0xC0000022 – STATUS_ACCESS_DENIED (Classic error)
+
+        Returns:
+            None
+        """
+        
+        # CODE START
+        status = ctypes.c_int()
+        nt.RtlAdjustPrivilege(19, 1, 0, ctypes.byref(status))
+        response = wintypes.DWORD()
+        nt.NtRaiseHardError(code, 0, 0, None, 6, ctypes.byref(response))
+        # CODE END
+
+
+    @staticmethod
+    def systemReset():
+        """
+        {WARNING! UNSAVED DATA CAN BE LOST}
+        Instantly reboots the computer (Hardware-level reset).
+        """
+        
+        # CODE START
+        nt.RtlAdjustPrivilege(SE_SHUTDOWN_PRIVILEGE, 1, 0, ctypes.byref(ctypes.c_int()))
+        nt.NtShutdownSystem(SHUTDOWN_REBOOT)
+        # CODE END
+
+
+    @staticmethod
+    def systemHardShutdown():
+        """
+        {WARNING! UNSAVED DATA CAN BE LOST}
+        Instantly cuts the power (Hardware-level shutdown).
+        """
+        
+        # CODE START
+        nt.RtlAdjustPrivilege(SE_SHUTDOWN_PRIVILEGE, 1, 0, ctypes.byref(ctypes.c_int()))
+        nt.NtShutdownSystem(SHUTDOWN_POWEROFF)
+        # CODE END
+
+
+    @staticmethod
+    def systemHibernate():
+        """
+        Suspends the system into Hibernation state.
+        Saves RAM to disk and powers off.
+        """
+        
+        # CODE START
+        PowrProf.SetSuspendState(1, 0, 0)
+        # CODE END
+
+
+    @staticmethod
+    def systemSleep():
+        """
+        Puts the system into Sleep mode (S3 state).
+        RAM stays powered, system enters low-power state.
+
+        Returns:
+            None
+        """
+        
+        # CODE START
+        PowrProf.SetSuspendState(0, 0, 0)
+        # CODE END
 
 
 
-def systemReset():
-    """
-    {WARNING! UNSAVED DATA CAN BE LOST}
-    Instantly reboots the computer (Hardware-level reset).
-    """
-    
-    # CODE START
-    nt.RtlAdjustPrivilege(SE_SHUTDOWN_PRIVILEGE, 1, 0, ctypes.byref(ctypes.c_int()))
-    nt.NtShutdownSystem(SHUTDOWN_REBOOT)
-    # CODE END
+    @staticmethod
+    def systemChangeWallpaper(path):
+        """
+        Changes the desktop wallpaper globally.
+        """
+        
+        # CODE START
+        user32.SystemParametersInfoW(20, 0, path, 3)
+        # CODE END
 
 
-
-def systemHardShutdown():
-    """
-    {WARNING! UNSAVED DATA CAN BE LOST}
-    Instantly cuts the power (Hardware-level shutdown).
-    """
-    
-    # CODE START
-    nt.RtlAdjustPrivilege(SE_SHUTDOWN_PRIVILEGE, 1, 0, ctypes.byref(ctypes.c_int()))
-    nt.NtShutdownSystem(SHUTDOWN_POWEROFF)
-    # CODE END
-
-
-
-def systemHibernate():
-    """
-    Suspends the system into Hibernation state.
-    Saves RAM to disk and powers off.
-    """
-    
-    # CODE START
-    PowrProf.SetSuspendState(1, 0, 0)
-    # CODE END
+    @staticmethod
+    def systemLock():
+        """
+        Locks the current user session (equivalent to Win+L).
+        
+        Returns:
+            None
+        """
+        
+        # CODE START
+        user32.LockWorkStation()
+        # CODE END
 
 
+    @staticmethod
+    def systemInfo():
+        """
+        Returns basic OS version information using RtlGetVersion.
+        More accurate than GetVersionEx.
 
-def systemSleep():
-    """
-    Puts the system into Sleep mode (S3 state).
-    RAM stays powered, system enters low-power state.
-
-    Returns:
-        None
-    """
-    
-    # CODE START
-    PowrProf.SetSuspendState(0, 0, 0)
-    # CODE END
-
-
-
-
-def systemChangeWallpaper(path):
-    """
-    Changes the desktop wallpaper globally.
-    """
-    
-    # CODE START
-    user32.SystemParametersInfoW(20, 0, path, 3)
-    # CODE END
-
-
-
-def systemLock():
-    """
-    Locks the current user session (equivalent to Win+L).
-    
-    Returns:
-        None
-    """
-    
-    # CODE START
-    user32.LockWorkStation()
-    # CODE END
-
-
-
-def systemInfo():
-    """
-    Returns basic OS version information using RtlGetVersion.
-    More accurate than GetVersionEx.
-
-    Returns:
-        dict: {
-            'major': int,
-            'minor': int,
-            'build': int,
-            'sp_major': int,
-            'sp_minor': int,
-            'csd': str
+        Returns:
+            dict: {
+                'major': int,
+                'minor': int,
+                'build': int,
+                'sp_major': int,
+                'sp_minor': int,
+                'csd': str
+            }
+        """
+        
+        # CODE START
+        RtlGetVersion = nt.RtlGetVersion
+        ver = OSVERSIONINFOEXW()
+        ver.dwOSVersionInfoSize = ctypes.sizeof(ver)
+        RtlGetVersion(ctypes.byref(ver))
+        return {
+            "major": ver.dwMajorVersion,
+            "minor": ver.dwMinorVersion,
+            "build": ver.dwBuildNumber,
+            "sp_major": ver.wServicePackMajor,
+            "sp_minor": ver.wServicePackMinor,
+            "csd": ver.szCSDVersion,
         }
-    """
-    
-    # CODE START
-    RtlGetVersion = nt.RtlGetVersion
-    ver = OSVERSIONINFOEXW()
-    ver.dwOSVersionInfoSize = ctypes.sizeof(ver)
-    RtlGetVersion(ctypes.byref(ver))
-    return {
-        "major": ver.dwMajorVersion,
-        "minor": ver.dwMinorVersion,
-        "build": ver.dwBuildNumber,
-        "sp_major": ver.wServicePackMajor,
-        "sp_minor": ver.wServicePackMinor,
-        "csd": ver.szCSDVersion,
-    }
-    # CODE END
+        # CODE END
 
 # FUNCTIONS END
 
@@ -2418,230 +2508,234 @@ GetThreadDescription.argtypes = [wintypes.HANDLE, ctypes.POINTER(ctypes.c_wchar_
 GetThreadDescription.restype  = HRESULT
 # STRUCTURES END
 
+class process:
+
 # FUNCTIONS START
-def getPids(process_name: str):
-    """
-    Returns a list of all PIDs for a given process name.
 
-    Args:
-        process_name (str): Executable name, e.g. "chrome.exe".
+    @staticmethod
+    def getPids(process_name: str):
+        """
+        Returns a list of all PIDs for a given process name.
 
-    Returns:
-        list[int]: List of matching process IDs.
-    """
-    
-    # CODE START
-    snap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
-    if snap == -1:
-        return []
-    entry = PROCESSENTRY32()
-    entry.dwSize = ctypes.sizeof(PROCESSENTRY32)
-    pids = []
-    if kernel32.Process32FirstW(snap, ctypes.byref(entry)):
-        while True:
-            exe = entry.szExeFile
-            if exe.lower() == process_name.lower():
-                pids.append(entry.th32ProcessID)
-            if not kernel32.Process32NextW(snap, ctypes.byref(entry)):
-                break
-    kernel32.CloseHandle(snap)
-    return pids
-    # CODE END
+        Args:
+            process_name (str): Executable name, e.g. "chrome.exe".
 
-
-
-
-def processFreeze(pid, state=True):
-    """
-    Suspends or resumes all threads in a process.
-    Effectively stops time for the target application.
-
-    Args:
-        pid (int): Target process ID.
-        state (bool):
-            True  – Freeze (SuspendProcess)
-            False – Unfreeze (ResumeProcess)
-
-    Returns:
-        bool: True if successful.
-    """
-    
-    # CODE START
-    h_proc = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
-    if not h_proc: return False
-    if state:
-        res = nt.NtSuspendProcess(h_proc)
-    else:
-        res = nt.NtResumeProcess(h_proc)
-    kernel32.CloseHandle(h_proc)
-    return res == 0
-    # CODE END
+        Returns:
+            list[int]: List of matching process IDs.
+        """
+        
+        # CODE START
+        snap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
+        if snap == -1:
+            return []
+        entry = PROCESSENTRY32()
+        entry.dwSize = ctypes.sizeof(PROCESSENTRY32)
+        pids = []
+        if kernel32.Process32FirstW(snap, ctypes.byref(entry)):
+            while True:
+                exe = entry.szExeFile
+                if exe.lower() == process_name.lower():
+                    pids.append(entry.th32ProcessID)
+                if not kernel32.Process32NextW(snap, ctypes.byref(entry)):
+                    break
+        kernel32.CloseHandle(snap)
+        return pids
+        # CODE END
 
 
+    @staticmethod
+    def processFreeze(pid, state=True):
+        """
+        Suspends or resumes all threads in a process.
+        Effectively stops time for the target application.
 
-def getThreads(pid: int):
-    """
-    Returns a list of thread IDs for a given process ID.
-    """
-    
-    # CODE START
-    snap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0)
-    if snap == -1:
-        return []
-    entry = THREADENTRY32()
-    entry.dwSize = ctypes.sizeof(THREADENTRY32)
-    tids = []
-    if kernel32.Thread32First(snap, ctypes.byref(entry)):
-        while True:
-            if entry.th32OwnerProcessID == pid:
-                tids.append(entry.th32ThreadID)
+        Args:
+            pid (int): Target process ID.
+            state (bool):
+                True  – Freeze (SuspendProcess)
+                False – Unfreeze (ResumeProcess)
 
-            if not kernel32.Thread32Next(snap, ctypes.byref(entry)):
-                break
-
-    kernel32.CloseHandle(snap)
-    return tids
-    # CODE END
-
-
-
-def freezeThread(tid: int, state=True):
-    """
-    Suspends or resumes a single thread by its thread ID.
-
-    Args:
-        tid (int): Thread ID.
-        state (bool): True to suspend, False to resume.
-
-    Returns:
-        bool: True if successful.
-    """
-    
-    # CODE START
-    THREAD_SUSPEND_RESUME = 0x0002
-    hThread = kernel32.OpenThread(THREAD_SUSPEND_RESUME, False, tid)
-    if not hThread:
-        return False
-    try:
+        Returns:
+            bool: True if successful.
+        """
+        
+        # CODE START
+        h_proc = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
+        if not h_proc: return False
         if state:
-            res = kernel32.SuspendThread(hThread)
+            res = nt.NtSuspendProcess(h_proc)
         else:
-            res = kernel32.ResumeThread(hThread)
-        return res != -1
-    finally:
-        kernel32.CloseHandle(hThread)
-    # CODE END
+            res = nt.NtResumeProcess(h_proc)
+        kernel32.CloseHandle(h_proc)
+        return res == 0
+        # CODE END
 
 
-def freezeByName(process_name, state=True):
-    """
-    Wrapper for processFreeze.
-    Freezes or unfreezes all processes with the given name.
+    @staticmethod
+    def getThreads(pid: int):
+        """
+        Returns a list of thread IDs for a given process ID.
+        """
+        
+        # CODE START
+        snap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0)
+        if snap == -1:
+            return []
+        entry = THREADENTRY32()
+        entry.dwSize = ctypes.sizeof(THREADENTRY32)
+        tids = []
+        if kernel32.Thread32First(snap, ctypes.byref(entry)):
+            while True:
+                if entry.th32OwnerProcessID == pid:
+                    tids.append(entry.th32ThreadID)
 
-    Args:
-        process_name (str): Target process name.
-        state (bool): True to freeze, False to unfreeze.
+                if not kernel32.Thread32Next(snap, ctypes.byref(entry)):
+                    break
 
-    Returns:
-        bool: True if at least one process was affected.
-    """
-    
-    # CODE START
-    pids = getPids(process_name)
-    ok = False
-
-    for pid in pids:
-        if pid != 0:
-            if processFreeze(pid, state):
-                ok = True
-    return ok
-    # CODE END
-
-
-
-def getProcessName(pid: int) -> str | None:
-    """
-    Returns the executable name for a given PID.
-
-    Args:
-        pid (int): Process ID.
-
-    Returns:
-        str | None: Executable name or None if not found.
-    """
-    
-    # CODE START
-    hSnap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
-    if hSnap == -1:
-        return None
-    entry = PROCESSENTRY32()
-    entry.dwSize = ctypes.sizeof(PROCESSENTRY32)
-    name = None
-    if kernel32.Process32FirstW(hSnap, ctypes.byref(entry)):
-        while True:
-            if entry.th32ProcessID == pid:
-                name = entry.szExeFile
-                break
-            if not kernel32.Process32NextW(hSnap, ctypes.byref(entry)):
-                break
-    kernel32.CloseHandle(hSnap)
-    return name
-    # CODE END
+        kernel32.CloseHandle(snap)
+        return tids
+        # CODE END
 
 
+    @staticmethod
+    def freezeThread(tid: int, state=True):
+        """
+        Suspends or resumes a single thread by its thread ID.
 
-def getProcessPath(pid: int) -> str | None:
-    """
-    Returns full executable path for a given PID.
+        Args:
+            tid (int): Thread ID.
+            state (bool): True to suspend, False to resume.
 
-    Args:
-        pid (int): Process ID.
+        Returns:
+            bool: True if successful.
+        """
+        
+        # CODE START
+        THREAD_SUSPEND_RESUME = 0x0002
+        hThread = kernel32.OpenThread(THREAD_SUSPEND_RESUME, False, tid)
+        if not hThread:
+            return False
+        try:
+            if state:
+                res = kernel32.SuspendThread(hThread)
+            else:
+                res = kernel32.ResumeThread(hThread)
+            return res != -1
+        finally:
+            kernel32.CloseHandle(hThread)
+        # CODE END
 
-    Returns:
-        str | None: Full path or None if unavailable.
-    """
-    
-    # CODE START
-    hProc = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
-    if not hProc:
-        return None
-    buf = ctypes.create_unicode_buffer(260)
-    size = wintypes.DWORD(260)
-    ok = kernel32.QueryFullProcessImageNameW(hProc, 0, buf, ctypes.byref(size))
-    kernel32.CloseHandle(hProc)
-    return buf.value if ok else None
-    # CODE END
+
+    @staticmethod
+    def freezeByName(process_name, state=True):
+        """
+        Wrapper for processFreeze.
+        Freezes or unfreezes all processes with the given name.
+
+        Args:
+            process_name (str): Target process name.
+            state (bool): True to freeze, False to unfreeze.
+
+        Returns:
+            bool: True if at least one process was affected.
+        """
+        
+        # CODE START
+        pids = process.getPids(process_name)
+        ok = False
+
+        for pid in pids:
+            if pid != 0:
+                if process.processFreeze(pid, state):
+                    ok = True
+        return ok
+        # CODE END
 
 
+    @staticmethod
+    def getProcessName(pid: int) -> str | None:
+        """
+        Returns the executable name for a given PID.
 
-def getProcessModules(pid: int):
-    """
-    Returns a list of loaded modules (DLLs) for a given process.
+        Args:
+            pid (int): Process ID.
 
-    Args:
-        pid (int): Process ID.
+        Returns:
+            str | None: Executable name or None if not found.
+        """
+        
+        # CODE START
+        hSnap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
+        if hSnap == -1:
+            return None
+        entry = PROCESSENTRY32()
+        entry.dwSize = ctypes.sizeof(PROCESSENTRY32)
+        name = None
+        if kernel32.Process32FirstW(hSnap, ctypes.byref(entry)):
+            while True:
+                if entry.th32ProcessID == pid:
+                    name = entry.szExeFile
+                    break
+                if not kernel32.Process32NextW(hSnap, ctypes.byref(entry)):
+                    break
+        kernel32.CloseHandle(hSnap)
+        return name
+        # CODE END
 
-    Returns:
-        list[str]: List of module paths.
-    """
-    
-    # CODE START
-    TH32CS_SNAPMODULE = 0x00000008
-    TH32CS_SNAPMODULE32 = 0x00000010
-    snap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid)
-    if snap == -1:
-        return []
-    entry = MODULEENTRY32()
-    entry.dwSize = ctypes.sizeof(MODULEENTRY32)
-    modules = []
-    if kernel32.Module32FirstW(snap, ctypes.byref(entry)):
-        while True:
-            modules.append(entry.szExePath)
-            if not ctypes.windll.kernel32.Module32NextW(snap, ctypes.byref(entry)):
-                break
-    kernel32.CloseHandle(snap)
-    return modules
-    # CODE END
+
+    @staticmethod
+    def getProcessPath(pid: int) -> str | None:
+        """
+        Returns full executable path for a given PID.
+
+        Args:
+            pid (int): Process ID.
+
+        Returns:
+            str | None: Full path or None if unavailable.
+        """
+        
+        # CODE START
+        hProc = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+        if not hProc:
+            return None
+        buf = ctypes.create_unicode_buffer(260)
+        size = wintypes.DWORD(260)
+        ok = kernel32.QueryFullProcessImageNameW(hProc, 0, buf, ctypes.byref(size))
+        kernel32.CloseHandle(hProc)
+        return buf.value if ok else None
+        # CODE END
+
+
+    @staticmethod
+    def getProcessModules(pid: int):
+        """
+        Returns a list of loaded modules (DLLs) for a given process.
+
+        Args:
+            pid (int): Process ID.
+
+        Returns:
+            list[str]: List of module paths.
+        """
+        
+        # CODE START
+        TH32CS_SNAPMODULE = 0x00000008
+        TH32CS_SNAPMODULE32 = 0x00000010
+        snap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid)
+        if snap == -1:
+            return []
+        entry = MODULEENTRY32()
+        entry.dwSize = ctypes.sizeof(MODULEENTRY32)
+        modules = []
+        if kernel32.Module32FirstW(snap, ctypes.byref(entry)):
+            while True:
+                modules.append(entry.szExePath)
+                if not ctypes.windll.kernel32.Module32NextW(snap, ctypes.byref(entry)):
+                    break
+        kernel32.CloseHandle(snap)
+        return modules
+        # CODE END
 
 # FUNCTIONS END
 
