@@ -93,3 +93,14 @@
     - Updated BRUH... I WANTED TO WRITE WHAT I UPDATED BUT FORGOT IT ACTUALLY NOW.. oh.. i remember i updated loadraw in screen
   FIXED:
     - LOCATE ON SCREEN IS ACTUALLY WORK TODAY!!
+
+
+
+[2026-07-22 21:19:00]] patch to version 1.0.8
+  ADDED:
+    - NONE
+  CHANGED:
+    - Make nothing() really useful now
+    - Updated moveTo()
+  FIXED:
+    - NONE
