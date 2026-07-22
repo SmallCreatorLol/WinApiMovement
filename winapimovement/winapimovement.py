@@ -170,7 +170,7 @@ class mouse:
             raise TypeError("Invalid button")
         input_event = INPUT()
         input_event.type = INPUT_MOUSE
-        input_event.mi = MOUSEINPUT(0, 0, data, event, 0, None)
+        input_event.mi = MOUSEINPUT(0, 0, data, event, 0, nothing())
         user32.SendInput(1, ctypes.byref(input_event), ctypes.sizeof(INPUT))
         # CODE END
 
@@ -206,7 +206,7 @@ class mouse:
             raise TypeError("Invalid button")
         input_event = INPUT()
         input_event.type = INPUT_MOUSE
-        input_event.mi = MOUSEINPUT(0, 0, data, event, 0, None)
+        input_event.mi = MOUSEINPUT(0, 0, data, event, 0, nothing())
         user32.SendInput(1, ctypes.byref(input_event), ctypes.sizeof(INPUT))
         # CODE END
 
@@ -258,10 +258,10 @@ class mouse:
                 raise TypeError("Invalid button")
             for _ in range(n):
                 events[idx].type = INPUT_MOUSE
-                events[idx].mi = MOUSEINPUT(0, 0, data, down, 0, None)
+                events[idx].mi = MOUSEINPUT(0, 0, data, down, 0, nothing())
                 idx += 1
                 events[idx].type = INPUT_MOUSE
-                events[idx].mi = MOUSEINPUT(0, 0, data, up, 0, None)
+                events[idx].mi = MOUSEINPUT(0, 0, data, up, 0, nothing())
                 idx += 1
             user32.SendInput(total, ctypes.byref(events), ctypes.sizeof(INPUT))
             times -= n
@@ -270,7 +270,7 @@ class mouse:
             
             
     @staticmethod
-    def moveTo(x, y, steps=1, duration=0, rel=False, humanity=False, speed=0.4, roughness=1.0):
+    def moveTo(x, y, steps=1, duration=0, rel=False, humanity=False, speed=0.4, roughness=1.0, wavy=0.0):
         """
         Moves the mouse cursor smoothly to (x, y).
 
@@ -279,6 +279,11 @@ class mouse:
             y (int): Target Y coordinate.
             steps (int): Number of interpolation steps.
             duration (float): Total movement time in seconds.
+            rel (bool): Relative position flag.
+            humanity (bool): Human-like movement simulation.
+            speed (float): Movement speed modifier.
+            roughness (float): Noise/jitter intensity.
+            wavy (float): Wave amplitude multiplier (0.0 = disabled, 2.0-5.0 = standard human wave).
 
         Returns:
             None
@@ -309,8 +314,8 @@ class mouse:
             total_steps = max(15, int(speed / step_delay))
             base_step_len = dist / total_steps
             current_angle = math.atan2(y - start_y, x - start_x)
-            start_time = time.perf_counter()
-            for _ in range(total_steps):
+            perp_angle = current_angle + math.pi / 2
+            for i in range(total_steps):
                 dx = x - cx
                 dy = y - cy
                 current_dist = math.hypot(dx, dy)
@@ -320,9 +325,18 @@ class mouse:
                 ideal_angle = math.atan2(dy, dx)
                 angle_error = random.uniform(-0.08, 0.08) * roughness
                 current_angle = current_angle * 0.7 + ideal_angle * 0.3 + angle_error
-                cx += math.cos(current_angle) * step_len
-                cy += math.sin(current_angle) * step_len
-                user32.SetCursorPos(int(cx), int(cy))
+                target_cx = cx + math.cos(current_angle) * step_len
+                target_cy = cy + math.sin(current_angle) * step_len
+                if wavy > 0.0:
+                    progress = i / total_steps
+                    wave_offset = math.sin(progress * math.pi) * wavy
+                    final_cx = target_cx + math.cos(perp_angle) * wave_offset
+                    final_cy = target_cy + math.sin(perp_angle) * wave_offset
+                else:
+                    final_cx = target_cx
+                    final_cy = target_cy
+                cx, cy = target_cx, target_cy
+                user32.SetCursorPos(int(final_cx), int(final_cy))
                 time.sleep(step_delay)
             while True:
                 dx = x - mouse.position()[0]
@@ -339,7 +353,7 @@ class mouse:
 
 
     @staticmethod
-    def moveRel(dx, dy, steps=1, duration=0, rel=False, humanity=False, speed=0.4, roughness=1.0):
+    def moveRel(dx, dy, steps=1, duration=0, rel=False, humanity=False, speed=0.4, roughness=1.0, wavy=0.0):
         """
         Moves the mouse cursor relative to its current position.
 
@@ -364,7 +378,7 @@ class mouse:
         else:
             target_x = start_x + dx
             target_y = start_y + dy
-        mouse.moveTo(target_x, target_y, steps, duration, humanity=humanity, speed=speed, roughness=roughness)
+        mouse.moveTo(target_x, target_y, steps, duration, humanity=humanity, speed=speed, roughness=roughness, wavy=wavy)
         # CODE END
 
 
@@ -421,7 +435,7 @@ class mouse:
 
 
     @staticmethod
-    def dragRel(dx, dy, steps=100, duration=1, button='left', rel=False, humanity=False, speed=0.4, roughness=1.0):
+    def dragRel(dx, dy, steps=100, duration=1, button='left', rel=False, humanity=False, speed=0.4, roughness=1.0, wavy=0.0):
         """
         Holds a mouse button and drags the cursor relative to its current position.
 
@@ -438,7 +452,7 @@ class mouse:
         
         # CODE START
         mouse.mouseDown()
-        mouse.moveRel(dx, dy, steps, duration, rel, humanity, speed, roughness)
+        mouse.moveRel(dx, dy, steps, duration, rel, humanity, speed, roughness, wavy=0.0)
         mouse.mouseUp()
         # CODE END
 
@@ -869,14 +883,14 @@ class keyboard:
         event.type = 1
         if type == 'vk':
             vk = keyboard.keyToVK(key)
-            event.ki = KEYBDINPUT(vk, 0, 0, 0, None)
+            event.ki = KEYBDINPUT(vk, 0, 0, 0, nothing())
         elif type == 'unicode':
             code = ord(key)
-            event.ki = KEYBDINPUT(0, code, KEYEVENTF_UNICODE, 0, None)
+            event.ki = KEYBDINPUT(0, code, KEYEVENTF_UNICODE, 0, nothing())
         elif type == 'scan':
             vk = keyboard.keyToVK(key)
             scan = user32.MapVirtualKeyW(vk, 0)
-            event.ki = KEYBDINPUT(0, scan, KEYEVENTF_SCANCODE, 0, None)
+            event.ki = KEYBDINPUT(0, scan, KEYEVENTF_SCANCODE, 0, nothing())
         else:
             raise TypeError("type must be 'vk', 'unicode' or 'scan'")
         user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(INPUT))
@@ -902,14 +916,14 @@ class keyboard:
         event.type = 1
         if type == 'vk':
             vk = keyboard.keyToVK(key)
-            event.ki = KEYBDINPUT(vk, 0, KEYEVENTF_KEYUP, 0, None)
+            event.ki = KEYBDINPUT(vk, 0, KEYEVENTF_KEYUP, 0, nothing())
         elif type == 'unicode':
             code = ord(key)
-            event.ki = KEYBDINPUT(0, code, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP, 0, None)
+            event.ki = KEYBDINPUT(0, code, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP, 0, nothing())
         elif type == 'scan':
             vk = keyboard.keyToVK(key)
             scan = user32.MapVirtualKeyW(vk, 0)
-            event.ki = KEYBDINPUT(0, scan, KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, 0, None)
+            event.ki = KEYBDINPUT(0, scan, KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, 0, nothing())
         else:
             raise TypeError("type must be 'vk', 'unicode' or 'scan'")
         user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(INPUT))
@@ -1116,7 +1130,7 @@ class keyboard:
         """
         
         # CODE START
-        if not user32.OpenClipboard(None):
+        if not user32.OpenClipboard(nothing()):
             return False
         try:
             user32.EmptyClipboard()
@@ -1148,7 +1162,7 @@ class keyboard:
         """
         
         # CODE START
-        if not user32.OpenClipboard(None):
+        if not user32.OpenClipboard(nothing()):
             return None
         try:
             h_cd = user32.GetClipboardData(CF_UNICODETEXT)
@@ -1177,7 +1191,7 @@ class keyboard:
         """
         
         # CODE START
-        if user32.OpenClipboard(None):
+        if user32.OpenClipboard(nothing()):
             try:
                 user32.EmptyClipboard()
                 return True
@@ -1270,11 +1284,11 @@ class keyboard:
         wc.lpfnWndProc=proc
         wc.lpszClassName="RawInputHiddenWindow"
         user32.RegisterClassW(ctypes.byref(wc))
-        hwnd=user32.CreateWindowExW(0,wc.lpszClassName,"raw",0,0,0,0,0,None,None,None,None)
+        hwnd=user32.CreateWindowExW(0,wc.lpszClassName,"raw",0,0,0,0,0,nothing(),nothing(),nothing(),nothing())
         rid=RAWINPUTDEVICE(1,6,RIDEV_INPUTSINK,hwnd)
         user32.RegisterRawInputDevices(ctypes.byref(rid),1,ctypes.sizeof(RAWINPUTDEVICE))
         msg=wintypes.MSG()
-        while user32.GetMessageW(ctypes.byref(msg),None,0,0)!=0:
+        while user32.GetMessageW(ctypes.byref(msg),nothing(),0,0)!=0:
             user32.TranslateMessage(ctypes.byref(msg))
             user32.DispatchMessageW(ctypes.byref(msg))
         # CODE END
@@ -1603,7 +1617,7 @@ class screen:
         
         # CODE START
         token = ctypes.c_ulonglong()
-        gdiplus.GdiplusStartup(ctypes.byref(token), ctypes.byref(GdiplusStartupInput(1, None, False, False)), None)
+        gdiplus.GdiplusStartup(ctypes.byref(token), ctypes.byref(GdiplusStartupInput(1, nothing(), False, False)), nothing())
         bitmap = ctypes.c_void_p()
         gdiplus.GdipCreateBitmapFromFile(wintypes.LPCWSTR(path), ctypes.byref(bitmap))
         w, h = ctypes.c_uint32(), ctypes.c_uint32()
@@ -1629,7 +1643,7 @@ class screen:
 
 
     @staticmethod
-    def locateOnScreen(region, confidence, pixels):
+    def locateOnScreen(region, pixels):
         """
         Searches for an image on the screen using multi-stage filtering.
 
@@ -1737,7 +1751,7 @@ class WAVEINCAPSW(ctypes.Structure):
         ("dwSupport", ctypes.c_uint)
     ]
 
-ole32.CoInitialize(None)
+ole32.CoInitialize(nothing())
 # SCTUCTURES END
 
 class sound:
@@ -1820,7 +1834,7 @@ class sound:
         """
         
         # CODE START
-        ctypes.windll.winmm.PlaySoundW(path, None, 0x00020000 | 0x0002)
+        ctypes.windll.winmm.PlaySoundW(path, nothing(), 0x00020000 | 0x0002)
         # CODE END
 
 
@@ -1891,7 +1905,7 @@ class sound:
         IID_IAudioEndpointVolume = "{5CDF2C82-841E-4546-9722-0CF74078229A}"
         try:
             enum = ctypes.c_void_p()
-            ole32.CoCreateInstance(ctypes.byref(sound._guid(CLSID_MMDeviceEnumerator)), None, 1, ctypes.byref(sound._guid(IID_IMMDeviceEnumerator)), ctypes.byref(enum))
+            ole32.CoCreateInstance(ctypes.byref(sound._guid(CLSID_MMDeviceEnumerator)), nothing(), 1, ctypes.byref(sound._guid(IID_IMMDeviceEnumerator)), ctypes.byref(enum))
             device = ctypes.c_void_p()
             vt_enum = ctypes.cast(enum, ctypes.POINTER(ctypes.c_void_p))
             ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_void_p))(
@@ -1899,10 +1913,10 @@ class sound:
             volume = ctypes.c_void_p()
             vt_device = ctypes.cast(device, ctypes.POINTER(ctypes.c_void_p))
             ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.POINTER(GUID), ctypes.c_int, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p))(
-                ctypes.cast(vt_device.contents, ctypes.POINTER(ctypes.c_void_p))[3])(device, ctypes.byref(sound._guid(IID_IAudioEndpointVolume)), 7, None, ctypes.byref(volume))
+                ctypes.cast(vt_device.contents, ctypes.POINTER(ctypes.c_void_p))[3])(device, ctypes.byref(sound._guid(IID_IAudioEndpointVolume)), 7, nothing(), ctypes.byref(volume))
             vt_volume = ctypes.cast(volume, ctypes.POINTER(ctypes.c_void_p))
             ctypes.CFUNCTYPE(ctypes.HRESULT, ctypes.c_void_p, ctypes.c_float, ctypes.c_void_p)(
-                ctypes.cast(vt_volume.contents, ctypes.POINTER(ctypes.c_void_p))[7])(volume, level_float, None)
+                ctypes.cast(vt_volume.contents, ctypes.POINTER(ctypes.c_void_p))[7])(volume, level_float, nothing())
             return True
         except:
             return False
@@ -2463,5 +2477,7 @@ class process:
 # FUNCTIONS END
 
 # PROCESS FUNCTIONS END
+
+# WINAPIMOVEMENT.PY END
 
 # WINAPIMOVEMENT.PY END
